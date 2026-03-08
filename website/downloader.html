@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video Downloader (Local)</title>
+<link rel="icon" type="image/x-icon" href="favicon_1.ico">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #111827;
+  padding: 20px;
+  height: 100vh;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+}
+
+.sidebar h3 {
+  margin-top: 0;
+  font-weight: 600;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.nav-btn {
+  display: block;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+  transition: 0.2s;
+}
+
+.nav-btn:hover {
+  background: #1f2937;
+}
+
+.nav-btn.active {
+  background: #6366f1;
+  color: white;
+}
+
+/* Main App */
+.app {
+  flex: 1;
+  padding: 40px;
+  max-width: 900px;
+}
+
+h1 {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.sub {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+input, select {
+  width: 80%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  margin-bottom: 12px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  color: white;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+#browseBtn {
+  margin-left: 10px;
+}
+
+progress {
+  height: 18px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+pre {
+  background: #0f172a;
+  padding: 15px;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 13px;
+  border: 1px solid #334155;
+}
+
+.back-home-btn {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  background: #374151;
+}
+
+.back-home-btn a {
+  text-decoration: none;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+
+<button class="back-home-btn">
+  <a href="index.html">Go Back</a>
+</button>
+
+<div class="sidebar">
+  <h3>Other Applications</h3>
+  <a href="convert.html" class="nav-btn">🎵 Marshall EQ Studio</a>
+  <a href="downloader.html" class="nav-btn active">📥 Mp4 & Mp3 Downloader</a>
+  <a href="vidcom.html" class="nav-btn">🎬 Video Compressor</a>
+</div>
+
+<div class="app">
+  <h1>Video Downloader</h1>
+  <h4>TPG Service(v3)</h4>
+  <p class="sub">Paste a link, choose format, and pick a save folder.</p>
+
+  <input id="url" type="text" placeholder="Enter URL to Source">
+
+  <p class="sub">Optional: Select a .txt file with multiple URLs (batch download)</p>
+  <input type="file" id="batchFile" accept=".txt,.csv">
+
+  <!-- NEW FORMAT SECTION -->
+  <div>
+    <label>
+      <input type="checkbox" id="videoCheck"> Video
+    </label>
+
+    <label style="margin-left:0px;">
+      <input type="checkbox" id="audioCheck"> Audio (MP3)
+    </label>
+  </div>
+
+  <select id="resolutionSelect" style="display:none;">
+    <option value="2160">UHD (2160p)</option>
+    <option value="1440">FHD (1440p)</option>
+    <option value="1080">1080p</option>
+    <option value="720">720p</option>
+    <option value="480">480p</option>
+    <option value="360">360p (Data Saver)</option>
+    <option value="240">240p</option>
+  </select>
+
+  <label>Save Location:</label><br>
+  <!-- Path is loaded dynamically via JS below -->
+  <input id="path" type="text" placeholder="Loading default path...">
+
+  <input type="file" id="folderPicker" webkitdirectory hidden>
+  <button id="browseBtn">Browse</button>
+
+  <br><br>
+
+  <button id="downloadBtn">Start Download</button>
+
+  <br><br>
+
+  <progress id="progressBar" value="0" max="100" style="width:80%;"></progress>
+
+  <pre id="log"></pre>
+</div>
+
+<script>
+const log = document.getElementById("log");
+const progressBar = document.getElementById("progressBar");
+
+log.textContent = "TPG Downloader ready.\n";
+
+// --- UNIVERSAL PATH FETCHEER ---
+// This runs immediately to get the correct OS path from PHP
+(async function loadDefaultPath() {
+    try {
+        const response = await fetch("get_path.php");
+        if (response.ok) {
+            const path = await response.text();
+            // Only set if the input is currently empty or placeholder
+            const pathInput = document.getElementById("path");
+            if (!pathInput.value || pathInput.value.includes("Loading")) {
+                pathInput.value = path;
+            }
+        }
+    } catch (e) {
+        console.log("Could not fetch dynamic path, manual entry required.");
+        document.getElementById("path").placeholder = "Enter path manually";
+    }
+})();
+
+const videoCheck = document.getElementById("videoCheck");
+const audioCheck = document.getElementById("audioCheck");
+const resolutionSelect = document.getElementById("resolutionSelect");
+
+videoCheck.addEventListener("change", () => {
+    resolutionSelect.style.display = videoCheck.checked ? "block" : "none";
+});
+
+document.getElementById("browseBtn").addEventListener("click", () => {
+    document.getElementById("folderPicker").click();
+});
+
+document.getElementById("folderPicker").addEventListener("change", e => {
+    if (e.target.files.length > 0) {
+        const first = e.target.files[0];
+        // webkitRelativePath uses forward slashes, which work on Windows too
+        const parts = first.webkitRelativePath.split("/");
+        parts.pop();
+        document.getElementById("path").value = parts.join("/");
+    }
+});
+
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+
+    const url = document.getElementById("url").value.trim();
+    const batchFile = document.getElementById("batchFile").files[0];
+    const savePath = document.getElementById("path").value.trim();
+    const resolution = resolutionSelect.value;
+
+    if (!videoCheck.checked && !audioCheck.checked) {
+        log.textContent = "Select Video and/or Audio.\n";
+        return;
+    }
+
+    if (videoCheck.checked && !resolution) {
+        log.textContent = "Select a resolution.\n";
+        return;
+    }
+
+    if (!url && !batchFile) {
+        log.textContent = "Enter URL or batch file.\n";
+        return;
+    }
+
+    log.textContent = "Starting download...\n";
+    progressBar.value = 0;
+
+    const formData = new FormData();
+    formData.append("url", url);
+    formData.append("path", savePath);
+    formData.append("resolution", resolution);
+    formData.append("video", videoCheck.checked ? "1" : "0");
+    formData.append("audio", audioCheck.checked ? "1" : "0");
+
+    if (batchFile) formData.append("batchFile", batchFile);
+
+    const response = await fetch("download.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        log.textContent += text;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    log.textContent += "\nCompleted.\n";
+});
+</script>
+</body>
+</html>

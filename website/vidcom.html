@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video Compressor</title>
+<link rel="icon" type="image/x-icon" href="favicon_1.ico">
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #111827;
+  padding: 20px;
+  height: 100vh;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+.sidebar h3 {
+  margin-top: 0;
+  font-weight: 600;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.nav-btn {
+  display: block;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+  transition: 0.2s;
+}
+
+.nav-btn:hover {
+  background: #1f2937;
+}
+
+.nav-btn.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* Main App */
+.app {
+  flex: 1;
+  padding: 40px;
+  max-width: 900px;
+  box-sizing: border-box;
+}
+
+h1 { margin-top: 0; font-weight: 600; }
+
+.sub {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+input, select {
+  width: 80%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  color: white;
+  cursor: pointer;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+progress {
+  height: 18px;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 80%;
+}
+
+#log {
+  background: #0f172a;
+  padding: 15px;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+  border: 1px solid #334155;
+  word-break: break-all;
+}
+
+.error  { color:#f87171; }
+.success{ color:#6ee7b7; }
+.info   { color:#60a5fa; }
+
+.app { animation: fadeIn 0.4s ease; }
+@keyframes fadeIn {
+  from {opacity:0; transform:translateY(10px);}
+  to {opacity:1; transform:translateY(0);}
+}
+
+.back-home-btn {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  background: #374151;
+  padding: 0;
+}
+.back-home-btn a {
+  text-decoration: none;
+  color: white;
+  display: block;
+  padding: 10px 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h3>Other Applications</h3>
+  <a href="convert.html" class="nav-btn">🎵 Marshall EQ Studio</a>
+  <a href="downloader.html" class="nav-btn">📥 Mp4 & Mp3 Downloader</a>
+  <a href="vidcom.html" class="nav-btn active">🎬 Video Compressor</a>
+</div>
+
+<button class="back-home-btn">
+  <a href="index.html">Go Back</a>
+</button>
+
+<div class="app">
+  <h1>Video Compressor</h1>
+  <h4>TPG Service(V3)</h4>
+  <p class="sub">Smart compression with HDR detection and hardware acceleration.</p>
+
+  <input type="file" id="videoFile" accept="video/*">
+
+  <p class="sub">Quality Target (CRF – lower = better quality)</p>
+
+  <select id="crf">
+      <option value="32">Low – smallest file</option>
+      <option value="28" selected>Medium – recommended</option>
+      <option value="24">High – better quality</option>
+      <option value="21">Very High</option>
+      <option value="18">Best / Lossless</option>
+  </select>
+
+  <br>
+
+  <button id="btn" disabled>Compress Video</button>
+
+  <br><br>
+
+  <progress id="prog" value="0" max="100"></progress>
+
+  <br><br>
+
+  <div id="log">Ready. Choose a video file…</div>
+</div>
+
+<script>
+const fileEl = document.getElementById('videoFile');
+const crfEl  = document.getElementById('crf');
+const btn    = document.getElementById('btn');
+const prog   = document.getElementById('prog');
+const log    = document.getElementById('log');
+
+function append(msg, cls='') {
+    log.innerHTML += (cls?`<span class="${cls}">${msg}</span>`:msg)+'<br>';
+    log.scrollTop = log.scrollHeight;
+}
+
+fileEl.onchange = () => { 
+    btn.disabled = !fileEl.files[0]; 
+    if(fileEl.files[0]) {
+        log.innerHTML = '';
+        append(`Selected: ${fileEl.files[0].name} (${(fileEl.files[0].size/1048576).toFixed(1)} MB)`, 'info');
+    }
+};
+
+btn.onclick = async () => {
+    const file = fileEl.files[0];
+    if(!file) return;
+    
+    btn.disabled = true;
+    prog.value = 0;
+    log.innerHTML = '';
+
+    append('Analyzing and Uploading…', 'info');
+    prog.value = 10;
+
+    const form = new FormData();
+    form.append('video', file);
+    form.append('crf', crfEl.value);
+
+    try {
+        // Targeting the PHP script inside /bin/
+        const resp = await fetch('bin/compress.php', { method:'POST', body:form });
+        const text = await resp.text();
+        
+        prog.value = 80;
+
+        if (resp.status !== 200 || !text.startsWith('SUCCESS')) {
+            append('Server Error:', 'error');
+            append(text, 'error');
+            prog.value = 0;
+            btn.disabled = false;
+            return;
+        }
+
+        const lines = text.split('\n');
+        const data = {};
+        lines.forEach(l => {
+            const eq = l.indexOf('=');
+            if(eq > 0) data[l.substr(0, eq).trim()] = l.substr(eq+1).trim();
+        });
+
+        append(`Done! Size: ${(data.size/1048576).toFixed(1)} MB`, 'success');
+        append(`Saved to: ${data.url}`, 'info');
+        prog.value = 100;
+
+    } catch(err) {
+        append('Network Error: '+err.message, 'error');
+        prog.value = 0;
+    } finally {
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

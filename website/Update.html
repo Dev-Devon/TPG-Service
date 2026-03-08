@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>System Update | TPG Tools</title>
+<link rel="icon" type="image/x-icon" href="favicon_1.ico">
+<style>
+  body { margin: 0; font-family: "Segoe UI", sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; display: flex; }
+  .sidebar { width: 240px; background: #111827; padding: 20px; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.4); }
+  .nav-btn { display: block; text-decoration: none; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; color: #cbd5e1; }
+  .nav-btn:hover { background: #1f2937; }
+  .app { flex: 1; padding: 40px; }
+  
+  /* Update Animation Styling */
+  .update-box { background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
+  .loader { border: 4px solid #334155; border-top: 4px solid #6366f1; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  
+  button { padding: 12px 24px; border: none; border-radius: 8px; background: #6366f1; color: white; cursor: pointer; font-size: 16px; }
+  button:disabled { background: #475569; cursor: not-allowed; }
+  pre { background: #0f172a; padding: 15px; border-radius: 8px; text-align: left; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h3>System</h3>
+  <a href="index.html" class="nav-btn">← Back Home</a>
+</div>
+
+<div class="app">
+  <h1>Check for Updates</h1>
+  <div class="update-box">
+    <div id="loader" class="loader"></div>
+    <p id="status">Click below to check for the latest version of TPG Tools.</p>
+    <button id="updateBtn">Check & Install Updates</button>
+    <pre id="log">Ready.</pre>
+  </div>
+</div>
+
+<script>
+  document.getElementById('updateBtn').onclick = async () => {
+    const btn = document.getElementById('updateBtn');
+    const loader = document.getElementById('loader');
+    const log = document.getElementById('log');
+    
+    btn.disabled = true;
+    loader.style.display = 'block';
+    log.textContent = "Connecting to GitHub...";
+
+    const res = await fetch('update.php');
+    const text = await res.text();
+    
+    log.textContent = text;
+    loader.style.display = 'none';
+    btn.disabled = false;
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Marshall EQ Studio | TPG Tools</title>
+<link rel="icon" type="image/x-icon" href="favicon_1.ico">
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+}
+/* Sidebar */
+body {
+    display: flex;
+}
+
+.sidebar {
+    width: 240px;
+    background: #111827;
+    padding: 20px;
+    height: 100vh;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+}
+
+.sidebar h3 {
+    margin-top: 0;
+    font-weight: 600;
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.nav-link {
+    display: block;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    transition: 0.2s;
+}
+
+.nav-link:hover {
+    background: #1f2937;
+}
+
+.nav-link.active {
+    background: #6366f1;
+    color: white;
+}
+
+/* Content wrapper */
+.main-content {
+    flex: 1;
+    width: 100%;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 600;
+}
+
+.hero p {
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+.nav-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    color: white;
+    cursor: pointer;
+}
+
+/* Main Container */
+.tools {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.tool-card {
+    width: 100%;
+    max-width: 1000px;
+    background: #111827;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+}
+
+/* Path Inputs */
+.path-box {
+    width: 100%;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #00bfff;
+    border-radius: 8px;
+    margin-top: 6px;
+    font-family: monospace;
+    box-sizing: border-box;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+    align-items: center;
+}
+
+.browse-btn {
+    padding: 12px 16px;
+    background: #334155;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 14px;
+}
+.browse-btn:hover {
+    background: #475569;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+/* EQ Container */
+.eq-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 30px 0;
+    background: #0b1220;
+    padding: 25px;
+    border-radius: 12px;
+    overflow-x: auto;
+    border: 1px solid #1f2937;
+}
+
+.eq-band {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+}
+
+.eq-band label {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.eq-band input[type=range] {
+    writing-mode: bt-lr;
+    appearance: slider-vertical;
+    width: 12px;
+    height: 200px;
+    background: #1f2937;
+    cursor: pointer;
+}
+
+.eq-value {
+    font-size: 11px;
+    color: #38bdf8;
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+/* Preamp Box */
+.preamp-box {
+    background: #0b1220;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#preAmp {
+    width: 100%;
+}
+
+#preAmpVal {
+    color: #38bdf8;
+    font-weight: bold;
+}
+
+/* Buttons */
+#convertBtn {
+    flex: 2;
+    background: linear-gradient(90deg, #00bfff, #38bdf8);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#resetBtn {
+    flex: 1;
+    background: #1f2937;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    padding: 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#convertBtn:hover,
+#resetBtn:hover {
+    opacity: 0.9;
+}
+
+/* Log */
+#log {
+    text-align: left;
+    margin-top: 25px;
+    background: #000;
+    color: #00ff66;
+    padding: 18px;
+    font-size: 12px;
+    border-radius: 10px;
+    height: 180px;
+    overflow-y: auto;
+    border: 1px solid #1f2937;
+    font-family: monospace;
+}
+</style>
+</head>
+
+<body>
+<body>
+
+<div class="sidebar">
+  <h3>Other Applications</h3>
+  <a href="downloader.html" class="nav-link">📥 Mp4 & Mp3 Downloader</a>
+  <a href="convert.html" class="nav-link active">🎵 Marshall EQ Studio</a>
+  <a href="vidcom.html" class="nav-link">🎬 Video Compressor</a>
+</div>
+
+<div class="main-content">
+
+<div class="hero">
+    <h1>Marshall EQ Studio</h1>
+    <h4>TPG Service(v3)</h4>
+    <p>13-Band Batch Processor optimized for Marshall Major IV.</p>
+    <button class="nav-btn" onclick="window.location.href='index.html'" style="margin-top:20px;">
+        Go Back
+    </button>
+</div>
+
+<div class="tools">
+    <div class="tool-card">
+
+        <div style="text-align:left; margin-bottom:25px;">
+            
+            <!-- 1. Single File Input -->
+            <label style="color:#94a3b8;">Select your audio file:</label>
+            <div class="input-group">
+                <input type="text" id="singleFilePath" class="path-box" placeholder="Please select path to file" readonly>
+                <button class="browse-btn" onclick="document.getElementById('singleFilePicker').click()">Browse</button>
+            </div>
+            <input type="file" id="singleFilePicker" accept="audio/*,video/*">
+
+            <!-- 2. Batch Folder Input -->
+            <label style="color:#94a3b8; display:block; margin-top:20px;">
+                Select your folder path (If need batch processing)
+            </label>
+            <div class="input-group">
+                <input type="text" id="batchFolderPath" class="path-box" placeholder="Please select path to folder" readonly>
+                <button class="browse-btn" onclick="document.getElementById('batchFolderPicker').click()">Browse</button>
+            </div>
+            <input type="file" id="batchFolderPicker" webkitdirectory>
+
+            <!-- 3. Output Folder Input -->
+            <label style="color:#94a3b8; display:block; margin-top:20px;">
+                Select output folder (default):
+            </label>
+            <div class="input-group">
+                <input type="text" id="outputPath" class="path-box" placeholder="Loading default path...">
+                <button class="browse-btn" onclick="document.getElementById('outputFolderPicker').click()">Browse</button>
+            </div>
+            <input type="file" id="outputFolderPicker" webkitdirectory>
+
+        </div>
+
+        <div class="eq-container" id="eqInterface"></div>
+
+        <div class="preamp-box">
+            <div style="flex:1;">
+                <label>Gain (Pre-Amp):</label>
+                <input type="range" id="preAmp" min="-30" max="30" value="2" step="0.5">
+            </div>
+            <span id="preAmpVal">2 dB</span>
+        </div>
+
+        <div style="display:flex; gap:15px;">
+            <button id="convertBtn">START PROCESS</button>
+            <button id="resetBtn">RESET EQ</button>
+        </div>
+
+        <pre id="log"></pre>
+
+    </div>
+</div>
+
+</div>
+
+<script>
+    const bands = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 20000, 22050, 24000];
+const defaults = [3, 3.5, 1, -1, -0.5, 0, -1, 0.5, 2, 2, 0, 0, 0];
+
+function buildEQ() {
+    const eqInterface = document.getElementById('eqInterface');
+    if (!eqInterface) return;
+    eqInterface.innerHTML = ''; 
+    bands.forEach((freq, i) => {
+        const div = document.createElement('div');
+        div.className = 'eq-band';
+        div.innerHTML = `
+            <label>${freq}Hz</label>
+            <input type="range" class="band-slider" min="-30" max="30" value="${defaults[i]}" step="0.5" data-index="${i}">
+            <span class="eq-value" id="val-${i}">${defaults[i]}</span>
+        `;
+        eqInterface.appendChild(div);
+    });
+
+    document.querySelectorAll('.band-slider').forEach(slider => {
+        slider.oninput = function() {
+            document.getElementById(`val-${this.dataset.index}`).textContent = this.value;
+        };
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    buildEQ();
+    
+    // Load Default Output Path
+    const outputPathInput = document.getElementById('outputPath');
+    fetch('got_path.php')
+        .then(r => r.text())
+        .then(path => {
+            if (outputPathInput) outputPathInput.value = path;
+        });
+
+    // Single File Picker Logic
+    document.getElementById('singleFilePicker').addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            // We display the name, but we will upload the actual file content
+            document.getElementById('singleFilePath').value = file.name; 
+            // Clear batch
+            document.getElementById('batchFolderPath').value = '';
+            document.getElementById('batchFolderPicker').value = '';
+        }
+    });
+
+    // Batch Folder Picker Logic
+    document.getElementById('batchFolderPicker').addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            // Try to extract path from webkitRelativePath or file.path
+            let relPath = file.webkitRelativePath || '';
+            let fullPath = file.path || ''; // Electron only
+
+            if (fullPath !== '') {
+                if (fullPath.lastIndexOf('\\') > -1) {
+                    fullPath = fullPath.substring(0, fullPath.lastIndexOf('\\'));
+                } else if (fullPath.lastIndexOf('/') > -1) {
+                    fullPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+                }
+                document.getElementById('batchFolderPath').value = fullPath;
+            } else if (relPath !== '') {
+                // Fallback: Use folder name from relative path
+                // Note: This implies files are relative, PHP will try to resolve or upload
+                document.getElementById('batchFolderPath').value = "[Selected Folder] " + relPath.split('/')[0];
+            }
+            
+            // Clear single
+            document.getElementById('singleFilePath').value = '';
+            document.getElementById('singleFilePicker').value = '';
+        }
+    });
+
+    // Output Folder Picker Logic
+    document.getElementById('outputFolderPicker').addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            let fullPath = file.path || '';
+             if (fullPath.lastIndexOf('\\') > -1) {
+                fullPath = fullPath.substring(0, fullPath.lastIndexOf('\\'));
+            } else if (fullPath.lastIndexOf('/') > -1) {
+                fullPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+            }
+            if(fullPath) document.getElementById('outputPath').value = fullPath;
+        }
+    });
+
+    const preAmp = document.getElementById('preAmp');
+    const preAmpVal = document.getElementById('preAmpVal');
+    if (preAmp) preAmp.oninput = () => { preAmpVal.textContent = preAmp.value + " dB"; };
+});
+
+document.getElementById('convertBtn').addEventListener('click', async () => {
+    const singleFilePicker = document.getElementById('singleFilePicker');
+    const batchFolderPicker = document.getElementById('batchFolderPicker');
+    const outputPathInput = document.getElementById('outputPath');
+    const log = document.getElementById('log');
+    
+    const outputPath = outputPathInput.value.trim();
+    if (!outputPath) {
+        alert("Output path is missing!");
+        return;
+    }
+
+    log.textContent = "[SYSTEM] Starting Engine...\n";
+    log.textContent += "[INFO] Output set to: " + outputPath + "\n";
+
+    const formData = new FormData();
+    formData.append('outputPath', outputPath);
+    formData.append('gains', JSON.stringify(Array.from(document.querySelectorAll('.band-slider')).map(s => s.value)));
+    formData.append('preAmp', document.getElementById('preAmp').value);
+
+    // Mode 1: Single File (Upload Mode)
+    if (singleFilePicker.files.length > 0) {
+        log.textContent += "[MODE] Single File Upload...\n";
+        formData.append('action', 'single');
+        formData.append('audioFile', singleFilePicker.files[0]);
+    } 
+    // Mode 2: Batch (Upload Mode for Browser, Path Mode for Electron)
+    else if (batchFolderPicker.files.length > 0) {
+        log.textContent += "[MODE] Batch Processing...\n";
+        formData.append('action', 'batch');
+        
+        // Check if we have real paths (Electron)
+        const firstFile = batchFolderPicker.files[0];
+        if (firstFile.path) {
+            // We have paths, send list
+            let pathList = "";
+            let basePath = firstFile.path;
+             if (basePath.lastIndexOf('\\') > -1) {
+                basePath = basePath.substring(0, basePath.lastIndexOf('\\'));
+            } else if (basePath.lastIndexOf('/') > -1) {
+                basePath = basePath.substring(0, basePath.lastIndexOf('/'));
+            }
+            
+            for (let i = 0; i < batchFolderPicker.files.length; i++) {
+                pathList += basePath + '\\' + batchFolderPicker.files[i].name + "\n";
+            }
+            pathList += "-1";
+            formData.append('pathList', pathList);
+        } else {
+            // No paths (Standard Browser), upload files
+            log.textContent += "[INFO] Uploading files to temp (Browser Mode)...\n";
+            for (let i = 0; i < batchFolderPicker.files.length; i++) {
+                formData.append('batchFiles[]', batchFolderPicker.files[i]);
+            }
+        }
+    } else {
+        alert("Please select a single file or a folder!");
+        return;
+    }
+
+    try {
+        const response = await fetch('convert.php', { method: 'POST', body: formData });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            log.textContent += decoder.decode(value);
+            log.scrollTop = log.scrollHeight;
+        }
+    } catch (e) {
+        log.textContent += "\n[ERROR] Connection lost.";
+    }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+    document.querySelectorAll('.band-slider').forEach((s, i) => {
+        s.value = defaults[i];
+        document.getElementById(`val-${i}`).textContent = defaults[i];
+    });
+    document.getElementById('preAmp').value = 2;
+    document.getElementById('preAmpVal').textContent = "2 dB";
+});
+</script>
+</body>
+</body>
+</html>

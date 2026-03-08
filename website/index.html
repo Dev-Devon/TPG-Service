@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPG Service</title>
+    <link rel="icon" href="favicon_1.ico" type="image/x-icon">
+    <link rel="stylesheet" href="stylein.css">
+    <style>
+/* ==========================
+   Global Styles
+========================== */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0f1113;
+  color: #eaeaea;
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 50px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content {
+  flex: 1;
+  min-width: 300px;
+}
+
+.hero-content h1 {
+  font-size: 2.8rem;
+  color: #00bfff;
+  margin-bottom: 15px;
+}
+
+.hero-content p {
+  font-size: 1.1rem;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+/* Shapes in hero */
+.hero-shapes {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  min-width: 300px;
+  position: relative;
+}
+
+.shape {
+  width: 80px;
+  height: 80px;
+  background: #00bfff;
+  opacity: 0.7;
+  animation: float 4s ease-in-out infinite;
+}
+
+.circle { border-radius: 50%; }
+.square { border-radius: 8px; }
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 70px solid #00bfff;
+  background: transparent;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* Tools Section */
+.tools {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.tools h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: #00bfff;
+}
+
+.tool-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+}
+
+.tool-card {
+  background: #222;
+  border-radius: 10px;
+  width: 250px;
+  padding: 25px;
+  text-align: center;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 1;
+  cursor: pointer;
+}
+
+.tool-card h3 {
+  margin: 15px 0 10px;
+  font-size: 1.3rem;
+  color: #00bfff;
+}
+
+.tool-card p {
+  color: #ccc;
+  font-size: 0.95rem;
+}
+
+.tool-shape {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 10px;
+  background: #00bfff;
+  opacity: 0.8;
+}
+
+.tool-shape.circle { border-radius: 50%; }
+.tool-shape.square { border-radius: 8px; }
+.tool-shape.triangle {
+  width: 0;
+  height: 0;
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+  border-bottom: 50px solid #00bfff;
+  background: transparent;
+}
+
+.tool-card:hover {
+  transform: translateY(-10px) scale(1.05);
+}
+
+/* Footer */
+footer {
+  padding: 25px 0;
+  text-align: center;
+  background: #111;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .hero { flex-direction: column-reverse; text-align: center; }
+  .hero-shapes { gap: 20px; margin-bottom: 30px; }
+  .tool-cards { flex-direction: column; gap: 20px; }
+}
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin: 50px 0 30px;
+            gap: 20px;
+        }
+
+        .tab {
+            background: #222;
+            color: #00bfff;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,191,255,0.3);
+        }
+
+        .tab:hover, .tab.active {
+            background: #00bfff;
+            color: #0f1113;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,191,255,0.5);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Placeholder card */
+        .placeholder-card {
+            background: #1a1a1a;
+            border-radius: 15px;
+            padding: 50px;
+            margin: 20px auto;
+            width: 300px;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+            border: 2px dashed #00bfff;
+            transition: all 0.3s ease;
+        }
+
+        .placeholder-card:hover {
+            color: #00bfff;
+            border-color: #00ffff;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to TPG Service(V3)</h1>
+            <p>Your all-in-one media tools hub. Download videos, video compressor, and explore future services here.</p>
+        </div>
+        <div class="hero-shapes">
+            <div class="shape circle"></div>
+            <div class="shape square"></div>
+            <div class="shape triangle"></div>
+        </div>
+    </section>
+
+    <!-- Tabs for Services -->
+    <div class="tabs">
+        <div class="tab active" data-tab="tab1">Video Downloader</div>
+        <div class="tab" data-tab="tab2">Convert to MP3</div>
+	<div class="tab" data-tab="tab5">Video Compresser</div>
+        <div class="tab" data-tab="tab3">Future Service 1</div>
+        <div class="tab" data-tab="tab4">Future Service 2</div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content active" id="tab1">
+        <div class="tool-card" onclick="window.location.href='downloader.html'">
+            <div class="tool-shape triangle"></div>
+            <h3>Video Downloader</h3>
+            <p>Download videos and audio from multiple sources. Quick, reliable, and simple.</p>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab2">
+        <div class="tool-card" onclick="window.location.href='convert.html'">
+            <div class="tool-shape square"></div>
+            <h3>Convert to MP3</h3>
+            <p>Convert audio from your files and add EQ enhancements easily.</p>
+        </div>
+    </div>
+    <div class="tab-content" id="tab5">
+    <div class="tool-card" onclick="window.location.href='vidcom.html'">
+        <div class="tool-shape circle"></div>
+        <h3>Video Compresser</h3>
+        <p>Smart video Compresser</p>
+    </div>
+    </div>
+
+    <div class="tab-content" id="tab3">
+        <div class="placeholder-card">Future Service Placeholder</div>
+    </div>
+
+    <div class="tab-content" id="tab4">
+        <div class="placeholder-card">Future Service Placeholder</div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2026 TGP Service. All rights reserved.
+    </footer>
+
+<script>
+    // Tab functionality (unchanged)
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Floating shapes follow mouse slightly
+    const shapes = document.querySelectorAll('.hero-shapes .shape');
+    document.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+        shapes.forEach((shape, i) => {
+            const factor = (i + 1) * 2;
+            shape.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+        });
+    });
+
+    // Optional: subtle floating animation for tool cards on hover
+    const toolCards = document.querySelectorAll('.tool-card, .placeholder-card');
+    toolCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform += ' rotateZ(2deg)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = card.style.transform.replace(' rotateZ(2deg)','');
+        });
+    });
+
+    // Optional: Particle background for hero section
+    const hero = document.querySelector('.hero');
+    for(let i=0;i<30;i++){
+        const p = document.createElement('div');
+        p.style.position='absolute';
+        p.style.width=p.style.height='4px';
+        p.style.background='#00bfff22';
+        p.style.borderRadius='50%';
+        p.style.top=Math.random()*hero.offsetHeight+'px';
+        p.style.left=Math.random()*hero.offsetWidth+'px';
+        p.style.animation=`particleFloat ${5+Math.random()*5}s linear infinite`;
+        hero.appendChild(p);
+    }
+
+    const style = document.createElement('style');
+    style.innerHTML=`
+    @keyframes particleFloat{
+        0% { transform: translateY(0) translateX(0); opacity:0.3;}
+        50% { transform: translateY(-20px) translateX(10px); opacity:0.6;}
+        100% { transform: translateY(0) translateX(0); opacity:0.3;}
+    }`;
+    document.head.appendChild(style);
+</script>
+</body>
+</html>

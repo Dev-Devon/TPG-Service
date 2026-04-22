@@ -4,190 +4,693 @@
 <meta charset="utf-8">
 <title>Video Compressor</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color: #e2e8f0;
-  display: flex;
-  min-height: 100vh;
-}
+  :root {
+    --bg: #08090c;
+    --bg-elevated: #10121a;
+    --card-border: rgba(255,255,255,0.06);
+    --card-border-hover: rgba(0,223,162,0.15);
+    --fg: #e4e4e8;
+    --fg-dim: #8b8d9a;
+    --muted: #4e5060;
+    --accent: #00dfa2;
+    --accent-secondary: #00b4d8;
+    --accent-warm: #e8b931;
+    --accent-glow: rgba(0,223,162,0.2);
+    --error: #f87171;
+    --success: #6ee7b7;
+    --info: #00b4d8;
+    --radius: 22px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+  }
 
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  background: #111827;
-  padding: 20px;
-  height: 100vh;
-  box-shadow: 4px 0 20px rgba(0,0,0,0.4);
-  flex-shrink: 0;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.sidebar h3 {
-  margin-top: 0;
-  font-weight: 600;
-  font-size: 16px;
-  opacity: 0.8;
-}
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
 
-.nav-btn {
-  display: block;
-  text-decoration: none;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  color: #cbd5e1;
-  transition: 0.2s;
-}
+  /* Grain noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+  }
 
-.nav-btn:hover {
-  background: #1f2937;
-}
+  .content-wrapper {
+    position: relative;
+    z-index: 1;
+  }
 
-.nav-btn.active {
-  background: #2563eb;
-  color: white;
-}
+  /* Atmospheric orbs — just two, kept subtle */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .orb-1 {
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(0,223,162,0.07) 0%, transparent 70%);
+    top: -80px; right: -80px;
+    animation: orbDrift1 16s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(0,180,216,0.05) 0%, transparent 70%);
+    bottom: 5%; left: -120px;
+    animation: orbDrift2 20s ease-in-out infinite;
+  }
+  @keyframes orbDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 35px) scale(1.06); }
+  }
+  @keyframes orbDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, -30px) scale(1.08); }
+  }
 
-/* Main App */
-.app {
-  flex: 1;
-  padding: 40px;
-  max-width: 900px;
-  box-sizing: border-box;
-}
+  /* Hidden old elements */
+  .sidebar { display: none !important; }
+  .back-home-btn { display: none !important; }
 
-h1 { margin-top: 0; font-weight: 600; }
+  /* ─── Top Nav ─── */
+  .page-top {
+    padding: 20px 24px 0;
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
+  }
 
-.sub {
-  font-size: 14px;
-  opacity: 0.7;
-  margin-bottom: 12px;
-}
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.02);
+    color: var(--fg-dim);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .back-btn:hover {
+    border-color: var(--card-border-hover);
+    color: var(--accent);
+    background: rgba(0,223,162,0.04);
+  }
+  .back-btn i { font-size: 0.72rem; transition: transform 0.3s ease; }
+  .back-btn:hover i { transform: translateX(-3px); }
 
-input, select {
-  width: 80%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: white;
-  margin-bottom: 12px;
-  box-sizing: border-box;
-}
+  .mini-nav {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .mini-nav a {
+    padding: 7px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--fg-dim);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  .mini-nav a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+  .mini-nav a.active {
+    color: var(--bg);
+    background: var(--accent);
+    box-shadow: 0 2px 12px rgba(0,223,162,0.2);
+  }
+  .mini-nav a i { margin-right: 5px; font-size: 0.7rem; }
 
-input:focus, select:focus {
-  outline: none;
-  border-color: #2563eb;
-}
+  /* ─── Hero ─── */
+  .page-hero {
+    text-align: center;
+    padding: 40px 24px 8px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
 
-button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
-  color: white;
-  cursor: pointer;
-  margin-top: 6px;
-  font-weight: 500;
-}
+  .page-hero h1 {
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    animation: fadeUp 0.8s 0.08s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .page-hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 55%, var(--accent-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-hero h4 {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    animation: fadeUp 0.8s 0.12s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .page-hero .sub {
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.7;
+    font-weight: 300;
+    animation: fadeUp 0.8s 0.16s cubic-bezier(0.22,1,0.36,1) both;
+  }
 
-button:hover { opacity: 0.9; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-progress {
-  height: 18px;
-  border-radius: 8px;
-  overflow: hidden;
-  width: 80%;
-}
+  /* ─── Tool Content ─── */
+  .tool-content {
+    padding: 28px 20px 20px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
 
-#log {
-  background: #0f172a;
-  padding: 15px;
-  border-radius: 8px;
-  max-height: 220px;
-  overflow-y: auto;
-  font-size: 13px;
-  border: 1px solid #334155;
-  word-break: break-all;
-}
+  /* ─── Glass Card ─── */
+  .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.008) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 32px 28px 28px;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: cardIn 0.6s 0.15s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(22px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
 
-.error  { color:#f87171; }
-.success{ color:#6ee7b7; }
-.info   { color:#60a5fa; }
+  .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--card-border-hover);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.3), 0 0 40px rgba(0,223,162,0.03);
+  }
 
-.app { animation: fadeIn 0.4s ease; }
-@keyframes fadeIn {
-  from {opacity:0; transform:translateY(10px);}
-  to {opacity:1; transform:translateY(0);}
-}
+  /* Section title */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-dim);
+    margin-bottom: 22px;
+  }
+  .section-title i {
+    color: var(--accent);
+    font-size: 0.82rem;
+    opacity: 0.7;
+  }
+  .section-title .title-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--card-border), transparent);
+  }
 
-.back-home-btn {
-  position: fixed;
-  top: 15px;
-  right: 20px;
-  background: #374151;
-  padding: 0;
-}
-.back-home-btn a {
-  text-decoration: none;
-  color: white;
-  display: block;
-  padding: 10px 16px;
-}
+  /* ─── File Input ─── */
+  .file-zone {
+    border: 1.5px dashed var(--card-border);
+    border-radius: var(--radius-xs);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .file-zone:hover {
+    border-color: var(--accent);
+    background: rgba(0,223,162,0.02);
+  }
+  .file-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .file-zone .file-icon {
+    font-size: 1.5rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    transition: all 0.3s;
+  }
+  .file-zone:hover .file-icon {
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .file-zone .file-text {
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+  }
+  .file-zone .file-text span {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .file-zone .file-hint {
+    font-size: 0.73rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ─── Select ─── */
+  .field-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .select-wrapper {
+    position: relative;
+    margin-bottom: 22px;
+  }
+  .select-wrapper::after {
+    content: "\f107";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  .styled-select {
+    width: 100%;
+    padding: 13px 40px 13px 18px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--card-border);
+    background: rgba(0,0,0,0.3);
+    color: var(--fg);
+    font-size: 0.88rem;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .styled-select:hover { border-color: rgba(255,255,255,0.1); }
+  .styled-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .styled-select option {
+    background: var(--bg-elevated);
+    color: var(--fg);
+  }
+
+  /* ─── Button ─── */
+  .btn-primary {
+    padding: 15px 36px;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.04em;
+  }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  .btn-primary:hover::before { transform: translateX(100%); }
+  .btn-primary:hover {
+    box-shadow: 0 4px 28px rgba(0,223,162,0.35);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(0,223,162,0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .btn-primary:disabled::before { display: none; }
+
+  /* ─── Progress ─── */
+  .progress-wrap {
+    margin-top: 24px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .progress-percent {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.4);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    width: 0%;
+    transition: width 0.4s ease;
+    position: relative;
+  }
+  .progress-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Hidden native progress — JS sets its value, we read it */
+  #prog {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ─── Log ─── */
+  .log-wrap {
+    margin-top: 22px;
+  }
+
+  .log-container {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .log-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(16,18,26,0.6);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .log-header .terminal-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+
+  #log {
+    padding: 16px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--fg-dim);
+    word-break: break-all;
+  }
+  #log::-webkit-scrollbar { width: 5px; }
+  #log::-webkit-scrollbar-track { background: transparent; }
+  #log::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 3px;
+  }
+
+  /* Log color classes — same names, new colors */
+  .error  { color: var(--error); }
+  .success { color: var(--success); }
+  .info   { color: var(--info); }
+
+  /* ─── Footer ─── */
+  footer {
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    border-top: 1px solid rgba(255,255,255,0.035);
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  footer span { color: var(--accent); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .page-top { flex-direction: column; align-items: stretch; gap: 10px; }
+    .mini-nav { justify-content: center; }
+    .page-hero { padding: 28px 16px 0; }
+    .tool-content { padding: 20px 12px 50px; }
+    .glass-card { padding: 22px 16px 18px; border-radius: 18px; }
+  }
+
+  /* ─── Reduced Motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 </head>
+
 <body>
 
+<div class="content-wrapper">
+  <!-- Atmospheric orbs -->
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+
+  <!-- Top Nav -->
+  <div class="page-top">
+    <a class="back-btn" href="index.html">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <nav class="mini-nav" aria-label="Tool navigation">
+      <a href="convert.html"><i class="fas fa-sliders-h"></i>EQ Studio</a>
+      <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
+      <a href="vidcom.html" class="active"><i class="fas fa-film"></i>Compressor</a>
+      <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+    </nav>
+  </div>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <h1>Video <span class="grad">Compressor</span></h1>
+    <h4>TPG Service v3</h4>
+    <p class="sub">Smart compression with HDR detection and hardware acceleration.</p>
+  </section>
+
+  <!-- Tool Content -->
+  <div class="tool-content">
+    <div class="glass-card">
+      <div class="section-title">
+        <i class="fas fa-compress-arrows-alt"></i>
+        Compress
+        <span class="title-line"></span>
+      </div>
+
+      <!-- File input wrapped in drop zone -->
+      <div class="file-zone" id="fileZone">
+        <input type="file" id="videoFile" accept="video/*">
+        <div class="file-icon"><i class="fas fa-film"></i></div>
+        <div class="file-text">Drop a <span>video file</span> here</div>
+        <div class="file-hint">Supports all common video formats</div>
+      </div>
+
+      <label class="field-label">Quality Target (CRF — lower = better quality)</label>
+      <div class="select-wrapper">
+        <select id="crf" class="styled-select">
+          <option value="32">Low — smallest file</option>
+          <option value="28" selected>Medium — recommended</option>
+          <option value="24">High — better quality</option>
+          <option value="21">Very High</option>
+          <option value="18">Best / Lossless</option>
+        </select>
+      </div>
+
+      <button id="btn" class="btn-primary" disabled>
+        <i class="fas fa-compress-arrows-alt"></i>
+        Compress Video
+      </button>
+
+      <!-- Hidden native progress (JS sets value, we sync visually) -->
+      <progress id="prog" value="0" max="100"></progress>
+
+      <!-- Custom progress bar -->
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Processing</span>
+          <span class="progress-percent" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="log-wrap">
+        <div class="log-container">
+          <div class="log-header">
+            <span class="terminal-dot"></span>
+            Output
+          </div>
+          <div id="log">Ready. Choose a video file…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 <span>TPG Service</span>. All rights reserved.
+  </footer>
+</div>
+
+<!-- Hidden old elements (no JS references, kept for structural safety) -->
 <div class="sidebar">
   <h3>Other Applications</h3>
   <a href="convert.html" class="nav-btn">🎵 Marshall EQ Studio</a>
   <a href="downloader.html" class="nav-btn">📥 Mp4 & Mp3 Downloader</a>
   <a href="vidcom.html" class="nav-btn active">🎬 Video Compressor</a>
 </div>
-
 <button class="back-home-btn">
   <a href="index.html">Go Back</a>
 </button>
 
-<div class="app">
-  <h1>Video Compressor</h1>
-  <h4>TPG Service(V3)</h4>
-  <p class="sub">Smart compression with HDR detection and hardware acceleration.</p>
-
-  <input type="file" id="videoFile" accept="video/*">
-
-  <p class="sub">Quality Target (CRF – lower = better quality)</p>
-
-  <select id="crf">
-      <option value="32">Low – smallest file</option>
-      <option value="28" selected>Medium – recommended</option>
-      <option value="24">High – better quality</option>
-      <option value="21">Very High</option>
-      <option value="18">Best / Lossless</option>
-  </select>
-
-  <br>
-
-  <button id="btn" disabled>Compress Video</button>
-
-  <br><br>
-
-  <progress id="prog" value="0" max="100"></progress>
-
-  <br><br>
-
-  <div id="log">Ready. Choose a video file…</div>
-</div>
-
 <script>
+/* ─── Sync native <progress> to custom visual bar ─── */
+const prog = document.getElementById('prog');
+const progressFill = document.getElementById('progressFill');
+const progressPercent = document.getElementById('progressPercent');
+
+const progDescriptor = Object.getOwnPropertyDescriptor(HTMLProgressElement.prototype, 'value') ||
+                       Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'value');
+
+if (progDescriptor && progDescriptor.set) {
+  const originalSet = progDescriptor.set;
+  Object.defineProperty(prog, 'value', {
+    set(v) {
+      originalSet.call(this, v);
+      const pct = Math.round(v);
+      progressFill.style.width = pct + '%';
+      progressPercent.textContent = pct + '%';
+    },
+    get() {
+      return parseFloat(this.getAttribute('value')) || 0;
+    }
+  });
+}
+
+/* ─── File zone visual feedback ─── */
+const fileZone = document.getElementById('fileZone');
+
 const fileEl = document.getElementById('videoFile');
 const crfEl  = document.getElementById('crf');
 const btn    = document.getElementById('btn');
-const prog   = document.getElementById('prog');
 const log    = document.getElementById('log');
+
+fileEl.addEventListener('change', () => {
+  if (fileEl.files.length > 0) {
+    const name = fileEl.files[0].name;
+    fileZone.querySelector('.file-text').innerHTML = `Loaded: <span>${name}</span>`;
+    fileZone.querySelector('.file-hint').textContent = `${(fileEl.files[0].size/1048576).toFixed(1)} MB — ready`;
+    fileZone.style.borderColor = 'var(--accent)';
+    fileZone.style.background = 'rgba(0,223,162,0.03)';
+  }
+});
 
 function append(msg, cls='') {
     log.innerHTML += (cls?`<span class="${cls}">${msg}</span>`:msg)+'<br>';
@@ -218,7 +721,6 @@ btn.onclick = async () => {
     form.append('crf', crfEl.value);
 
     try {
-        // Targeting the PHP script inside /bin/
         const resp = await fetch('bin/compress.php', { method:'POST', body:form });
         const text = await resp.text();
         
@@ -251,6 +753,5 @@ btn.onclick = async () => {
     }
 };
 </script>
-
 </body>
 </html>

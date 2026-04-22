@@ -4,322 +4,793 @@
 <meta charset="UTF-8">
 <title>Marshall EQ Studio | TPG Tools</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-body {
-    margin: 0;
-    font-family: "Segoe UI", system-ui, sans-serif;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #e2e8f0;
+:root {
+    --bg: #08090c;
+    --bg-elevated: #10121a;
+    --card-bg: rgba(255,255,255,0.025);
+    --card-border: rgba(255,255,255,0.06);
+    --card-border-hover: rgba(0,223,162,0.15);
+    --fg: #e4e4e8;
+    --fg-dim: #8b8d9a;
+    --muted: #4e5060;
+    --accent: #00dfa2;
+    --accent-secondary: #00b4d8;
+    --accent-warm: #e8b931;
+    --accent-glow: rgba(0,223,162,0.2);
+    --error: #f87171;
+    --radius: 22px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
 }
-/* Sidebar */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Grain noise overlay */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+}
+
+.content-wrapper {
+    position: relative;
+    z-index: 1;
+}
+
+/* Atmospheric gradient orbs */
+.orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    will-change: transform;
+}
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,223,162,0.08) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    animation: orbDrift1 14s ease-in-out infinite;
+}
+.orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,180,216,0.06) 0%, transparent 70%);
+    bottom: 10%; left: -140px;
+    animation: orbDrift2 18s ease-in-out infinite;
+}
+.orb-3 {
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(232,185,49,0.04) 0%, transparent 70%);
+    top: 50%; right: 5%;
+    animation: orbDrift3 20s ease-in-out infinite;
+}
+
+@keyframes orbDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-35px, 45px) scale(1.06); }
+    66% { transform: translate(25px, -25px) scale(0.94); }
+}
+@keyframes orbDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(45px, -35px) scale(1.1); }
+}
+@keyframes orbDrift3 {
+    0%, 100% { transform: translate(0, 0); }
+    40% { transform: translate(-25px, 25px); }
+    80% { transform: translate(18px, -18px); }
+}
+
+/* ─── Top Nav Bar ─── */
+.page-top {
+    padding: 20px 24px 0;
+    max-width: 800px;
+    margin: 0 auto;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-.sidebar {
-    width: 240px;
-    background: #111827;
-    padding: 20px;
-    height: 100vh;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
-}
-
-.sidebar h3 {
-    margin-top: 0;
-    font-weight: 600;
-    font-size: 16px;
-    opacity: 0.8;
-}
-
-.nav-link {
-    display: block;
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    color: #cbd5e1;
-    transition: 0.2s;
-}
-
-.nav-link:hover {
-    background: #1f2937;
-}
-
-.nav-link.active {
-    background: #6366f1;
-    color: white;
-}
-
-/* Content wrapper */
-.main-content {
-    flex: 1;
-    width: 100%;
-}
-
-/* Hero Section */
-.hero {
-    text-align: center;
-    padding: 60px 20px 40px;
-}
-
-.hero h1 {
-    margin: 0;
-    font-size: 36px;
-    font-weight: 600;
-}
-
-.hero p {
-    opacity: 0.7;
-    margin-top: 10px;
-}
-
-.nav-btn {
-    padding: 10px 18px;
-    border-radius: 8px;
-    border: none;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    color: white;
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.02);
+    color: var(--fg-dim);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
+.back-btn:hover {
+    border-color: var(--card-border-hover);
+    color: var(--accent);
+    background: rgba(0,223,162,0.04);
+}
+.back-btn i { font-size: 0.72rem; transition: transform 0.3s ease; }
+.back-btn:hover i { transform: translateX(-3px); }
 
-/* Main Container */
-.tools {
+.mini-nav {
     display: flex;
-    justify-content: center;
-    padding: 20px;
-}
-
-.tool-card {
-    width: 100%;
-    max-width: 1000px;
-    background: #111827;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--card-border);
     border-radius: 14px;
-    padding: 30px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.mini-nav a {
+    padding: 7px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--fg-dim);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+.mini-nav a:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+.mini-nav a.active {
+    color: var(--bg);
+    background: var(--accent);
+    box-shadow: 0 2px 12px rgba(0,223,162,0.2);
+}
+.mini-nav a i { margin-right: 5px; font-size: 0.7rem; }
+
+/* ─── Page Hero ─── */
+.page-hero {
+    text-align: center;
+    padding: 40px 24px 8px;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
 }
 
-/* Path Inputs */
+.page-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 18px;
+    border-radius: 50px;
+    background: rgba(0,223,162,0.07);
+    border: 1px solid rgba(0,223,162,0.12);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    margin-bottom: 22px;
+    animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) both;
+}
+.page-badge .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.page-hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    animation: fadeUp 0.8s 0.08s cubic-bezier(0.22,1,0.36,1) both;
+}
+.page-hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 55%, var(--accent-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.page-hero h4 {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 10px;
+    animation: fadeUp 0.8s 0.12s cubic-bezier(0.22,1,0.36,1) both;
+}
+.page-hero .sub {
+    font-size: 0.95rem;
+    color: var(--fg-dim);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.75;
+    font-weight: 300;
+    animation: fadeUp 0.8s 0.16s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Decorative elements */
+.deco { position: absolute; pointer-events: none; }
+.deco-ring {
+    width: 150px; height: 150px;
+    border: 1px solid rgba(0,223,162,0.06);
+    border-radius: 50%;
+    top: 5%; left: 1%;
+    animation: spinSlow 35s linear infinite;
+}
+.deco-ring::after {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    top: -3px; left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.3;
+    box-shadow: 0 0 10px rgba(0,223,162,0.4);
+}
+.deco-ring-inner {
+    width: 95px; height: 95px;
+    border: 1px solid rgba(0,180,216,0.05);
+    border-radius: 50%;
+    top: 10%; left: 4%;
+    animation: spinSlow 25s linear infinite reverse;
+}
+@keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.deco-dots {
+    bottom: 0; right: 2%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 11px;
+    animation: fadeUp 1s 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+.deco-dots span {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(0,180,216,0.2);
+}
+.deco-dots span:nth-child(3n) { background: rgba(0,223,162,0.16); }
+.deco-dots span:nth-child(7) { width: 5px; height: 5px; background: rgba(232,185,49,0.18); }
+
+.deco-line {
+    width: 70px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,223,162,0.1), transparent);
+    top: 20%; right: 2%;
+    animation: fadeUp 1s 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ─── Tool Content ─── */
+.tool-content {
+    padding: 28px 20px 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ─── Glass Card ─── */
+.glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.008) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 32px 28px 28px;
+    transition: all 0.45s cubic-bezier(0.22,1,0.36,1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-bottom: 16px;
+}
+.glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(0,223,162,0) 0%, rgba(0,223,162,0.18) 40%, rgba(0,180,216,0.12) 70%, rgba(0,223,162,0) 100%);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    animation: borderShift 4s linear infinite paused;
+}
+.glass-card:hover::before {
+    opacity: 1;
+    animation-play-state: running;
+}
+@keyframes borderShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.glass-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--card-border-hover);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.3), 0 0 40px rgba(0,223,162,0.03);
+}
+
+.glass-card:nth-child(1) { animation: cardIn 0.6s 0.15s cubic-bezier(0.22,1,0.36,1) both; }
+.glass-card:nth-child(2) { animation: cardIn 0.6s 0.25s cubic-bezier(0.22,1,0.36,1) both; }
+.glass-card:nth-child(3) { animation: cardIn 0.6s 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(22px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Section title */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-dim);
+    margin-bottom: 20px;
+}
+.section-title i {
+    color: var(--accent);
+    font-size: 0.82rem;
+    opacity: 0.7;
+}
+.section-title .title-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--card-border), transparent);
+}
+
+/* ─── Form Elements ─── */
+.field-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.field-spacer { margin-top: 18px; }
+
+/* Path box input */
 .path-box {
     width: 100%;
-    padding: 12px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    color: #00bfff;
-    border-radius: 8px;
-    margin-top: 6px;
-    font-family: monospace;
+    padding: 13px 18px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--card-border);
+    color: var(--accent-secondary);
+    border-radius: var(--radius-xs);
+    margin-top: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
     box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+.path-box::placeholder {
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+}
+.path-box:hover { border-color: rgba(255,255,255,0.1); }
+.path-box:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+/* Input group (path + browse button) */
 .input-group {
     display: flex;
     gap: 10px;
-    margin-top: 6px;
+    margin-top: 0;
     align-items: center;
 }
 
+/* Browse button */
 .browse-btn {
-    padding: 12px 16px;
-    background: #334155;
-    color: white;
-    border: none;
-    border-radius: 8px;
+    padding: 13px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    color: var(--fg-dim);
+    border-radius: var(--radius-xs);
     cursor: pointer;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.3s ease;
 }
 .browse-btn:hover {
-    background: #475569;
+    background: rgba(0,223,162,0.06);
+    border-color: var(--card-border-hover);
+    color: var(--accent);
 }
 
-input[type="file"] {
-    display: none;
-}
+input[type="file"] { display: none; }
 
-/* EQ Container */
+/* ─── EQ Container ─── */
 .eq-container {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    margin: 30px 0;
-    background: #0b1220;
-    padding: 25px;
-    border-radius: 12px;
+    gap: 8px;
+    margin: 0;
+    background: rgba(0,0,0,0.25);
+    padding: 28px 18px;
+    border-radius: var(--radius-sm);
     overflow-x: auto;
-    border: 1px solid #1f2937;
+    border: 1px solid var(--card-border);
 }
 
 .eq-band {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 50px;
+    min-width: 44px;
 }
 
 .eq-band label {
-    font-size: 10px;
-    color: #64748b;
-    margin-bottom: 10px;
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 .eq-band input[type=range] {
     writing-mode: bt-lr;
     appearance: slider-vertical;
-    width: 12px;
-    height: 200px;
-    background: #1f2937;
+    width: 10px;
+    height: 180px;
+    background: rgba(255,255,255,0.05);
     cursor: pointer;
+    border-radius: 5px;
+    border: none;
+}
+
+.eq-band input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    cursor: pointer;
+    border: none;
+}
+.eq-band input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(180deg, var(--accent-secondary) 0%, rgba(255,255,255,0.06) 50%, var(--accent-warm) 100%);
+    border-radius: 5px;
+    height: 100%;
+    width: 10px;
 }
 
 .eq-value {
-    font-size: 11px;
-    color: #38bdf8;
-    margin-top: 10px;
-    font-family: monospace;
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
 }
 
-/* Preamp Box */
+/* ─── Preamp Box ─── */
 .preamp-box {
-    background: #0b1220;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 25px;
+    background: rgba(0,0,0,0.2);
+    padding: 22px 24px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0;
+    margin-top: 18px;
     display: flex;
     align-items: center;
     gap: 20px;
+    border: 1px solid var(--card-border);
+}
+
+.preamp-box label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 #preAmp {
     width: 100%;
+    height: 8px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+#preAmp::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    cursor: pointer;
+    border: 2px solid var(--bg);
 }
 
 #preAmpVal {
-    color: #38bdf8;
-    font-weight: bold;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: right;
 }
 
-/* Buttons */
+/* ─── Action Buttons ─── */
+.action-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
 #convertBtn {
     flex: 2;
-    background: linear-gradient(90deg, #00bfff, #38bdf8);
-    color: #000;
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: var(--bg);
     border: none;
-    padding: 18px;
-    border-radius: 10px;
-    font-weight: bold;
+    padding: 16px 24px;
+    border-radius: var(--radius-xs);
+    font-weight: 700;
     cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
+#convertBtn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+#convertBtn:hover::before { transform: translateX(100%); }
+#convertBtn:hover {
+    box-shadow: 0 4px 24px rgba(0,223,162,0.3);
+    transform: translateY(-2px);
+}
+#convertBtn:active { transform: translateY(0); }
 
 #resetBtn {
     flex: 1;
-    background: #1f2937;
-    color: #e2e8f0;
-    border: 1px solid #334155;
-    padding: 18px;
-    border-radius: 10px;
-    font-weight: bold;
+    background: rgba(255,255,255,0.03);
+    color: var(--fg-dim);
+    border: 1px solid var(--card-border);
+    padding: 16px 20px;
+    border-radius: var(--radius-xs);
+    font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
 }
-
-#convertBtn:hover,
 #resetBtn:hover {
-    opacity: 0.9;
+    border-color: var(--card-border-hover);
+    color: var(--fg);
+    background: rgba(0,223,162,0.04);
 }
 
-/* Log */
+/* ─── Log ─── */
 #log {
     text-align: left;
-    margin-top: 25px;
-    background: #000;
-    color: #00ff66;
-    padding: 18px;
-    font-size: 12px;
-    border-radius: 10px;
+    margin-top: 20px;
+    background: rgba(0,0,0,0.4);
+    color: var(--accent);
+    padding: 20px;
+    font-size: 0.78rem;
+    border-radius: var(--radius-sm);
     height: 180px;
     overflow-y: auto;
-    border: 1px solid #1f2937;
-    font-family: monospace;
+    border: 1px solid var(--card-border);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.7;
+}
+#log::-webkit-scrollbar { width: 6px; }
+#log::-webkit-scrollbar-track { background: transparent; }
+#log::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 3px;
+}
+
+/* ─── Footer ─── */
+footer {
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    border-top: 1px solid rgba(255,255,255,0.035);
+    max-width: 800px;
+    margin: 0 auto;
+}
+footer span { color: var(--accent); }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+    .page-top { flex-direction: column; align-items: stretch; gap: 10px; }
+    .mini-nav { justify-content: center; }
+    .page-hero { padding: 30px 16px 0; }
+    .page-hero h1 { font-size: clamp(1.5rem, 6vw, 2.2rem); }
+    .tool-content { padding: 20px 12px 50px; }
+    .glass-card { padding: 22px 16px 18px; border-radius: 18px; }
+    .eq-container { padding: 16px 8px; gap: 5px; }
+    .eq-band { min-width: 34px; }
+    .eq-band input[type=range] { height: 140px; width: 8px; }
+    .action-row { flex-direction: column; }
+    .deco-ring, .deco-ring-inner, .deco-line { display: none; }
+    .deco-dots { bottom: -5%; }
+    .section-title { font-size: 0.72rem; }
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>
 </head>
 
 <body>
-<body>
 
-<div class="sidebar">
-  <h3>Other Applications</h3>
-  <a href="downloader.html" class="nav-link">📥 Mp4 & Mp3 Downloader</a>
-  <a href="convert.html" class="nav-link active">🎵 Marshall EQ Studio</a>
-  <a href="vidcom.html" class="nav-link">🎬 Video Compressor</a>
-</div>
+<div class="content-wrapper">
+    <!-- Atmospheric orbs -->
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="orb orb-3" aria-hidden="true"></div>
 
-<div class="main-content">
+    <!-- Top Nav -->
+    <div class="page-top">
+        <a class="back-btn" href="index.html">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <nav class="mini-nav" aria-label="Tool navigation">
+            <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
+            <a href="convert.html" class="active"><i class="fas fa-sliders-h"></i>EQ Studio</a>
+            <a href="vidcom.html"><i class="fas fa-film"></i>Compressor</a>
+            <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+        </nav>
+    </div>
 
-<div class="hero">
-    <h1>Marshall EQ Studio</h1>
-    <h4>TPG Service(v3)</h4>
-    <p>13-Band Batch Processor optimized for Marshall Major IV.</p>
-    <button class="nav-btn" onclick="window.location.href='index.html'" style="margin-top:20px;">
-        Go Back
-    </button>
-</div>
+    <!-- Hero -->
+    <section class="page-hero">
+        <div class="deco deco-ring" aria-hidden="true"></div>
+        <div class="deco deco-ring-inner" aria-hidden="true"></div>
+        <div class="deco deco-line" aria-hidden="true"></div>
+        <div class="deco deco-dots" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
 
-<div class="tools">
-    <div class="tool-card">
+        <div class="page-badge">
+            <span class="pulse-dot"></span>
+            Audio Processor
+        </div>
+        <h1>Marshall <span class="grad">EQ Studio</span></h1>
+        <h4>TPG Service v3</h4>
+        <p class="sub">13-Band Batch Processor optimized for Marshall Major IV. Shape your sound with precision.</p>
+    </section>
 
-        <div style="text-align:left; margin-bottom:25px;">
-            
-            <!-- 1. Single File Input -->
-            <label style="color:#94a3b8;">Select your audio file:</label>
+    <!-- Tool Content -->
+    <div class="tool-content">
+
+        <!-- File Selection Card -->
+        <div class="glass-card">
+            <div class="section-title">
+                <i class="fas fa-folder-open"></i>
+                File Selection
+                <span class="title-line"></span>
+            </div>
+
+            <label class="field-label">Select your audio file</label>
             <div class="input-group">
                 <input type="text" id="singleFilePath" class="path-box" placeholder="Please select path to file" readonly>
                 <button class="browse-btn" onclick="document.getElementById('singleFilePicker').click()">Browse</button>
             </div>
             <input type="file" id="singleFilePicker" accept="audio/*,video/*">
 
-            <!-- 2. Batch Folder Input -->
-            <label style="color:#94a3b8; display:block; margin-top:20px;">
-                Select your folder path (If need batch processing)
-            </label>
+            <label class="field-label field-spacer">Select your folder path (Batch processing)</label>
             <div class="input-group">
                 <input type="text" id="batchFolderPath" class="path-box" placeholder="Please select path to folder" readonly>
                 <button class="browse-btn" onclick="document.getElementById('batchFolderPicker').click()">Browse</button>
             </div>
             <input type="file" id="batchFolderPicker" webkitdirectory>
 
-            <!-- 3. Output Folder Input -->
-            <label style="color:#94a3b8; display:block; margin-top:20px;">
-                Select output folder (default):
-            </label>
+            <label class="field-label field-spacer">Select output folder</label>
             <div class="input-group">
                 <input type="text" id="outputPath" class="path-box" placeholder="Loading default path...">
                 <button class="browse-btn" onclick="document.getElementById('outputFolderPicker').click()">Browse</button>
             </div>
             <input type="file" id="outputFolderPicker" webkitdirectory>
-
         </div>
 
-        <div class="eq-container" id="eqInterface"></div>
-
-        <div class="preamp-box">
-            <div style="flex:1;">
-                <label>Gain (Pre-Amp):</label>
-                <input type="range" id="preAmp" min="-30" max="30" value="2" step="0.5">
+        <!-- EQ Card -->
+        <div class="glass-card">
+            <div class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                13-Band Equalizer
+                <span class="title-line"></span>
             </div>
-            <span id="preAmpVal">2 dB</span>
+
+            <div class="eq-container" id="eqInterface"></div>
+
+            <div class="preamp-box">
+                <div style="flex:1;">
+                    <label>Gain (Pre-Amp)</label>
+                    <input type="range" id="preAmp" min="-30" max="30" value="2" step="0.5">
+                </div>
+                <span id="preAmpVal">2 dB</span>
+            </div>
         </div>
 
-        <div style="display:flex; gap:15px;">
-            <button id="convertBtn">START PROCESS</button>
-            <button id="resetBtn">RESET EQ</button>
-        </div>
+        <!-- Action Card -->
+        <div class="glass-card">
+            <div class="section-title">
+                <i class="fas fa-play"></i>
+                Process
+                <span class="title-line"></span>
+            </div>
 
-        <pre id="log"></pre>
+            <div class="action-row">
+                <button id="convertBtn">START PROCESS</button>
+                <button id="resetBtn">RESET EQ</button>
+            </div>
+
+            <pre id="log"></pre>
+        </div>
 
     </div>
-</div>
 
+    <footer>
+        &copy; 2026 <span>TPG Service</span>. All rights reserved.
+    </footer>
 </div>
 
 <script>
@@ -363,9 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('singleFilePicker').addEventListener('change', function(e) {
         if (this.files.length > 0) {
             const file = this.files[0];
-            // We display the name, but we will upload the actual file content
             document.getElementById('singleFilePath').value = file.name; 
-            // Clear batch
             document.getElementById('batchFolderPath').value = '';
             document.getElementById('batchFolderPicker').value = '';
         }
@@ -375,9 +844,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('batchFolderPicker').addEventListener('change', function(e) {
         if (this.files.length > 0) {
             const file = this.files[0];
-            // Try to extract path from webkitRelativePath or file.path
             let relPath = file.webkitRelativePath || '';
-            let fullPath = file.path || ''; // Electron only
+            let fullPath = file.path || ''; 
 
             if (fullPath !== '') {
                 if (fullPath.lastIndexOf('\\') > -1) {
@@ -387,12 +855,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 document.getElementById('batchFolderPath').value = fullPath;
             } else if (relPath !== '') {
-                // Fallback: Use folder name from relative path
-                // Note: This implies files are relative, PHP will try to resolve or upload
                 document.getElementById('batchFolderPath').value = "[Selected Folder] " + relPath.split('/')[0];
             }
             
-            // Clear single
             document.getElementById('singleFilePath').value = '';
             document.getElementById('singleFilePicker').value = '';
         }
@@ -437,21 +902,17 @@ document.getElementById('convertBtn').addEventListener('click', async () => {
     formData.append('gains', JSON.stringify(Array.from(document.querySelectorAll('.band-slider')).map(s => s.value)));
     formData.append('preAmp', document.getElementById('preAmp').value);
 
-    // Mode 1: Single File (Upload Mode)
     if (singleFilePicker.files.length > 0) {
         log.textContent += "[MODE] Single File Upload...\n";
         formData.append('action', 'single');
         formData.append('audioFile', singleFilePicker.files[0]);
     } 
-    // Mode 2: Batch (Upload Mode for Browser, Path Mode for Electron)
     else if (batchFolderPicker.files.length > 0) {
         log.textContent += "[MODE] Batch Processing...\n";
         formData.append('action', 'batch');
         
-        // Check if we have real paths (Electron)
         const firstFile = batchFolderPicker.files[0];
         if (firstFile.path) {
-            // We have paths, send list
             let pathList = "";
             let basePath = firstFile.path;
              if (basePath.lastIndexOf('\\') > -1) {
@@ -466,7 +927,6 @@ document.getElementById('convertBtn').addEventListener('click', async () => {
             pathList += "-1";
             formData.append('pathList', pathList);
         } else {
-            // No paths (Standard Browser), upload files
             log.textContent += "[INFO] Uploading files to temp (Browser Mode)...\n";
             for (let i = 0; i < batchFolderPicker.files.length; i++) {
                 formData.append('batchFiles[]', batchFolderPicker.files[i]);
@@ -502,6 +962,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     document.getElementById('preAmpVal').textContent = "2 dB";
 });
 </script>
-</body>
+
 </body>
 </html>

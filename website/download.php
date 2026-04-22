@@ -1,14 +1,27 @@
 <?php
 set_time_limit(0);
-header("Content-Type: text/plain");
-ob_implicit_flush(true);
-ob_end_flush();
 
- $savePath = $_POST['path'] ?? '';
- $url = $_POST['url'] ?? '';
- $resolution = $_POST['resolution'] ?? '';
- $video = $_POST['video'] ?? '0';
- $audio = $_POST['audio'] ?? '0';
+// 🔥 Clean all buffers safely (fix your error)
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
+// Proper streaming headers
+header("Content-Type: text/plain");
+header("Cache-Control: no-cache");
+header("X-Accel-Buffering: no");
+
+ob_implicit_flush(true);
+
+// Hide PHP warnings from breaking stream
+error_reporting(0);
+ini_set('display_errors', 0);
+
+$savePath = $_POST['path'] ?? '';
+$url = $_POST['url'] ?? '';
+$resolution = $_POST['resolution'] ?? '';
+$video = $_POST['video'] ?? '0';
+$audio = $_POST['audio'] ?? '0';
 
 if (!$savePath) {
     echo "Invalid save path.\n";
@@ -16,12 +29,11 @@ if (!$savePath) {
 }
 
 // Create directory if it doesn't exist
-// This handles mixed slashes correctly on all OS
 if (!is_dir($savePath)) {
     mkdir($savePath, 0777, true);
 }
 
- $urls = [];
+$urls = [];
 
 if (!empty($_FILES['batchFile']['tmp_name'])) {
     $file = file($_FILES['batchFile']['tmp_name']);
@@ -38,7 +50,7 @@ if (empty($urls)) {
     exit;
 }
 
- $ds = DIRECTORY_SEPARATOR;
+$ds = DIRECTORY_SEPARATOR;
 
 foreach ($urls as $u) {
 
@@ -46,22 +58,19 @@ foreach ($urls as $u) {
 
     if ($video === "1") {
 
-        // HLS SAFE FORMAT LOGIC
         if ($resolution == "1080") {
             $format = "best[height=1080]/best[height<=1080]";
-        }
-        elseif ($resolution == "360") {
+        } elseif ($resolution == "360") {
             $format = "best[height=360]/best[height<=360]";
-        }
-        else {
+        } else {
             $format = "best[height<=$resolution]";
         }
 
-        // Fix path for command line
         $cleanPath = rtrim($savePath, '/\\');
         $outputPath = $cleanPath . $ds . '%(title)s.%(ext)s';
 
-        $cmd = "yt-dlp -f \"$format\" --merge-output-format mp4 "
+        // 🔥 IMPORTANT: --newline makes progress stable
+        $cmd = "yt-dlp --newline -f \"$format\" --merge-output-format mp4 "
              . "-o \"$outputPath\" \"$u\" 2>&1";
 
         passthru($cmd, $exitCode);
@@ -76,7 +85,7 @@ foreach ($urls as $u) {
         $cleanPath = rtrim($savePath, '/\\');
         $outputPath = $cleanPath . $ds . '%(title)s.%(ext)s';
 
-        $cmd = "yt-dlp -x --audio-format mp3 "
+        $cmd = "yt-dlp --newline -x --audio-format mp3 "
              . "-o \"$outputPath\" \"$u\" 2>&1";
 
         passthru($cmd, $exitCode);

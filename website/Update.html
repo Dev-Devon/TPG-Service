@@ -4,38 +4,445 @@
 <meta charset="utf-8">
 <title>System Update | TPG Tools</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-  body { margin: 0; font-family: "Segoe UI", sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; display: flex; }
-  .sidebar { width: 240px; background: #111827; padding: 20px; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.4); }
-  .nav-btn { display: block; text-decoration: none; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; color: #cbd5e1; }
-  .nav-btn:hover { background: #1f2937; }
-  .app { flex: 1; padding: 40px; }
-  
-  /* Update Animation Styling */
-  .update-box { background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
-  .loader { border: 4px solid #334155; border-top: 4px solid #6366f1; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  
-  button { padding: 12px 24px; border: none; border-radius: 8px; background: #6366f1; color: white; cursor: pointer; font-size: 16px; }
-  button:disabled { background: #475569; cursor: not-allowed; }
-  pre { background: #0f172a; padding: 15px; border-radius: 8px; text-align: left; margin-top: 20px; }
+  :root {
+    --bg: #08090c;
+    --bg-elevated: #10121a;
+    --card-border: rgba(255,255,255,0.06);
+    --card-border-hover: rgba(0,223,162,0.15);
+    --fg: #e4e4e8;
+    --fg-dim: #8b8d9a;
+    --muted: #4e5060;
+    --accent: #00dfa2;
+    --accent-secondary: #00b4d8;
+    --accent-warm: #e8b931;
+    --accent-glow: rgba(0,223,162,0.2);
+    --radius: 22px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Grain noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Atmospheric orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .orb-1 {
+    width: 380px; height: 380px;
+    background: radial-gradient(circle, rgba(0,223,162,0.06) 0%, transparent 70%);
+    top: -60px; right: -60px;
+    animation: orbDrift1 16s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,180,216,0.05) 0%, transparent 70%);
+    bottom: 8%; left: -100px;
+    animation: orbDrift2 20s ease-in-out infinite;
+  }
+  @keyframes orbDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-25px, 30px) scale(1.06); }
+  }
+  @keyframes orbDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(35px, -25px) scale(1.08); }
+  }
+
+  /* Hidden old sidebar */
+  .sidebar { display: none !important; }
+
+  /* ─── Top Nav ─── */
+  .page-top {
+    padding: 20px 24px 0;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.02);
+    color: var(--fg-dim);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .back-btn:hover {
+    border-color: var(--card-border-hover);
+    color: var(--accent);
+    background: rgba(0,223,162,0.04);
+  }
+  .back-btn i { font-size: 0.72rem; transition: transform 0.3s ease; }
+  .back-btn:hover i { transform: translateX(-3px); }
+
+  /* ─── Hero ─── */
+  .page-hero {
+    text-align: center;
+    padding: 48px 24px 8px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .page-hero h1 {
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    animation: fadeUp 0.8s 0.08s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .page-hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 55%, var(--accent-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-hero .sub {
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    max-width: 380px;
+    margin: 0 auto;
+    line-height: 1.7;
+    font-weight: 300;
+    animation: fadeUp 0.8s 0.16s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Tool Content ─── */
+  .tool-content {
+    padding: 32px 20px 24px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* ─── Glass Card ─── */
+  .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.008) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 40px 32px 32px;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    text-align: center;
+    animation: cardIn 0.6s 0.15s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(22px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--card-border-hover);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.3), 0 0 40px rgba(0,223,162,0.03);
+  }
+
+  /* Card icon */
+  .card-icon {
+    width: 60px; height: 60px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, rgba(0,223,162,0.12), rgba(0,223,162,0.03));
+    color: var(--accent);
+    border: 1px solid rgba(0,223,162,0.1);
+  }
+
+  /* Section title */
+  .section-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-dim);
+    margin-bottom: 24px;
+  }
+  .section-title i {
+    color: var(--accent);
+    font-size: 0.82rem;
+    opacity: 0.7;
+  }
+  .section-title .title-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--card-border), transparent);
+  }
+
+  /* ─── Status Text ─── */
+  #status {
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  /* ─── Loader ─── */
+  #loader {
+    border: 3px solid var(--card-border);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+    display: none;
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ─── Button ─── */
+  .btn-primary {
+    padding: 15px 36px;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.04em;
+  }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  .btn-primary:hover::before { transform: translateX(100%); }
+  .btn-primary:hover {
+    box-shadow: 0 4px 28px rgba(0,223,162,0.35);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(0,223,162,0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .btn-primary:disabled::before { display: none; }
+
+  /* ─── Log ─── */
+  .log-wrap {
+    margin-top: 24px;
+    text-align: left;
+  }
+
+  .log-container {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .log-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(16,18,26,0.6);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .log-header .terminal-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+
+  #log {
+    padding: 16px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--accent);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  #log::-webkit-scrollbar { width: 5px; }
+  #log::-webkit-scrollbar-track { background: transparent; }
+  #log::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 3px;
+  }
+
+  /* ─── Footer ─── */
+  footer {
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    border-top: 1px solid rgba(255,255,255,0.035);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  footer span { color: var(--accent); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .page-hero { padding: 30px 16px 0; }
+    .tool-content { padding: 20px 12px 50px; }
+    .glass-card { padding: 28px 18px 22px; border-radius: 18px; }
+  }
+
+  /* ─── Reduced Motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 </head>
+
 <body>
 
+<div class="content-wrapper">
+  <!-- Atmospheric orbs -->
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+
+  <!-- Top Nav -->
+  <div class="page-top">
+    <a class="back-btn" href="index.html">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <h1>System <span class="grad">Update</span></h1>
+    <p class="sub">Keep TPG Service running the latest version with a single click.</p>
+  </section>
+
+  <!-- Tool Content -->
+  <div class="tool-content">
+    <div class="glass-card">
+      <div class="card-icon">
+        <i class="fas fa-sync-alt"></i>
+      </div>
+
+      <div class="section-title">
+        <span class="title-line"></span>
+        <i class="fas fa-satellite-dish"></i>
+        Update
+        <span class="title-line"></span>
+      </div>
+
+      <div id="loader"></div>
+      <p id="status">Click below to check for the latest version of TPG Tools.</p>
+      <button id="updateBtn" class="btn-primary">
+        <i class="fas fa-download"></i>
+        Check & Install Updates
+      </button>
+
+      <div class="log-wrap">
+        <div class="log-container">
+          <div class="log-header">
+            <span class="terminal-dot"></span>
+            Output
+          </div>
+          <pre id="log">Ready.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 <span>TPG Service</span>. All rights reserved.
+  </footer>
+</div>
+
+<!-- Hidden old sidebar (no JS references, kept for safety) -->
 <div class="sidebar">
   <h3>System</h3>
   <a href="index.html" class="nav-btn">← Back Home</a>
-</div>
-
-<div class="app">
-  <h1>Check for Updates</h1>
-  <div class="update-box">
-    <div id="loader" class="loader"></div>
-    <p id="status">Click below to check for the latest version of TPG Tools.</p>
-    <button id="updateBtn">Check & Install Updates</button>
-    <pre id="log">Ready.</pre>
-  </div>
 </div>
 
 <script>

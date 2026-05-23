@@ -1,102 +1,89 @@
 <?php
-set_time_limit(0);
-
-// 🔥 Clean all buffers safely (fix your error)
-while (ob_get_level()) {
-    ob_end_clean();
-}
-
-// Proper streaming headers
+// Disable output buffering to allow real-time log streaming
+while (ob_get_level()) { ob_end_clean(); }
 header("Content-Type: text/plain");
 header("Cache-Control: no-cache");
 header("X-Accel-Buffering: no");
-
 ob_implicit_flush(true);
 
-// Hide PHP warnings from breaking stream
-error_reporting(0);
-ini_set('display_errors', 0);
+// Keep script running even if user closes tab (long downloads)
+ignore_user_abort(true);
+set_time_limit(0);
 
-$savePath = $_POST['path'] ?? '';
-$url = $_POST['url'] ?? '';
-$resolution = $_POST['resolution'] ?? '';
-$video = $_POST['video'] ?? '0';
-$audio = $_POST['audio'] ?? '0';
+// Use Chrome UA to avoid strict CDN blocks on some platforms
+ $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-if (!$savePath) {
-    echo "Invalid save path.\n";
-    exit;
+// Logging helper for "alive" feeling
+function logLine($msg) {
+    echo "[" . date("H:i:s") . "] " . $msg . "\n";
+    flush();
 }
 
-// Create directory if it doesn't exist
-if (!is_dir($savePath)) {
-    mkdir($savePath, 0777, true);
-}
+ $savePath = $_POST['path'] ?? '';
+ $url = $_POST['url'] ?? '';
+ $res = intval($_POST['resolution'] ?? 1080); // Force integer
+ $dlVideo = $_POST['video'] ?? '0';
+ $dlAudio = $_POST['audio'] ?? '0';
 
-$urls = [];
+ $urls = [];
 
-if (!empty($_FILES['batchFile']['tmp_name'])) {
-    $file = file($_FILES['batchFile']['tmp_name']);
-    foreach ($file as $line) {
-        $line = trim($line);
-        if (!empty($line)) $urls[] = $line;
+// Handle Batch File upload
+if (isset($_FILES['batchFile']) && $_FILES['batchFile']['error'] === 0) {
+    $lines = file($_FILES['batchFile']['tmp_name']);
+    foreach ($lines as $line) {
+        if (trim($line)) $urls[] = trim($line);
     }
 } elseif (!empty($url)) {
     $urls[] = $url;
 }
 
-if (empty($urls)) {
-    echo "No URLs provided.\n";
+if (empty($urls) || empty($savePath)) {
+    logLine("ERROR: Invalid input or missing save path.");
     exit;
 }
 
-$ds = DIRECTORY_SEPARATOR;
-
-foreach ($urls as $u) {
-
-    echo "Processing: $u\n";
-
-    if ($video === "1") {
-
-        if ($resolution == "1080") {
-            $format = "best[height=1080]/best[height<=1080]";
-        } elseif ($resolution == "360") {
-            $format = "best[height=360]/best[height<=360]";
-        } else {
-            $format = "best[height<=$resolution]";
-        }
-
-        $cleanPath = rtrim($savePath, '/\\');
-        $outputPath = $cleanPath . $ds . '%(title)s.%(ext)s';
-
-        // 🔥 IMPORTANT: --newline makes progress stable
-        $cmd = "yt-dlp --newline -f \"$format\" --merge-output-format mp4 "
-             . "-o \"$outputPath\" \"$u\" 2>&1";
-
-        passthru($cmd, $exitCode);
-
-        if ($exitCode !== 0) {
-            echo "Video download failed.\n";
-        }
-    }
-
-    if ($audio === "1") {
-
-        $cleanPath = rtrim($savePath, '/\\');
-        $outputPath = $cleanPath . $ds . '%(title)s.%(ext)s';
-
-        $cmd = "yt-dlp --newline -x --audio-format mp3 "
-             . "-o \"$outputPath\" \"$u\" 2>&1";
-
-        passthru($cmd, $exitCode);
-
-        if ($exitCode !== 0) {
-            echo "Audio download failed.\n";
-        }
-    }
-
-    echo "Finished: $u\n";
+if (!is_dir($savePath)) {
+    mkdir($savePath, 0755, true);
 }
 
-echo "All tasks done.\n";
+// Base flags
+ $baseCmd = "yt-dlp --newline --no-warnings --ignore-errors --fragment-retries 10 --hls-prefer-native";
+
+foreach ($urls as $targetUrl) {
+    $domain = parse_url($targetUrl, PHP_URL_HOST);
+    $ref = $domain ? "https://" . $domain . "/" : "https://www.youtube.com/";
+    
+    // Secure path handling
+    $safePath = escapeshellarg(rtrim($savePath, '/\\'));
+    $safeUrl = escapeshellarg($targetUrl);
+    $safeRef = escapeshellarg($ref);
+    
+    $outTemplate = $safePath . '/%(title)s.%(ext)s';
+    
+    // Build command securely
+    $cmd = $baseCmd . " --user-agent " . escapeshellarg($ua) . " --referer " . $safeRef . " -o " . $outTemplate;
+
+    if ($dlVideo === "1") {
+        // Secure format string construction
+        $fmt = "bestvideo[height<={$res}]+bestaudio/best[height<={$res}]";
+        $cmd .= " -f " . escapeshellarg($fmt) . " --merge-output-format mp4";
+    }
+
+    if ($dlAudio === "1") {
+        $cmd .= " -x --audio-format mp3";
+    }
+
+    $cmd .= " " . $safeUrl . " 2>&1";
+
+    logLine("INFO: Processing " . parse_url($targetUrl, PHP_URL_HOST));
+    passthru($cmd, $exitCode);
+    
+    if ($exitCode !== 0) {
+        logLine("WARN: Process exited with code " . $exitCode);
+    } else {
+        logLine("INFO: Item completed.");
+    }
+}
+
+logLine("SYSTEM: All queued tasks complete.");
 ?>

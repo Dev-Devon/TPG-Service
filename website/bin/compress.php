@@ -41,7 +41,7 @@ if(empty($_FILES['video']) || $_FILES['video']['error']!==UPLOAD_ERR_OK){
  $crf  = (int)($_POST['crf'] ?? 28);
  $crf  = max(18,min(51,$crf));
 
- $filename = pathinfo($orig, PATHINFO_FILENAME) . '_compressed.mp4';
+ $filename = pathinfo($orig, PATHINFO_FILENAME) . '.mp4';
  $dest     = $saveFolder . $filename;
 
 /* ----------------------------------------------------------

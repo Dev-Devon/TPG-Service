@@ -1,153 +1,89 @@
 <?php
 header("Content-Type: text/plain");
 
-$githubUser="Dev-Devon";
-$repo="TPG-Service";
+ $user = "Dev-Devon";
+ $repo = "TPG-Service";
+ $verFile = "version.txt";
 
-$currentVersionFile="version.txt";
+// figure out where we are
+ $curr = file_exists($verFile) ? trim(file_get_contents($verFile)) : "none";
+echo "Current: $curr\n";
 
-/* ---------- get current version ---------- */
+// hit github api
+ $ctx = stream_context_create(["http" => ["header" => "User-Agent: TPG-Updater"]]);
+ $json = @file_get_contents("https://api.github.com/repos/$user/$repo/releases/latest", false, $ctx);
 
-if(file_exists($currentVersionFile)){
-$currentVersion=trim(file_get_contents($currentVersionFile));
-}else{
-$currentVersion="none";
+if (!$json) die("Error contacting GitHub\n");
+
+ $data = json_decode($json, true);
+ $latest = $data["tag_name"];
+echo "Latest: $latest\n";
+
+if ($latest == $curr) {
+    echo "Already up to date.\n";
+    exit;
 }
 
-echo "Current version: $currentVersion\n";
+echo "Updating...\n";
 
-/* ---------- check latest release ---------- */
+// grab the zip
+file_put_contents("update.zip", file_get_contents($data["zipball_url"], false, $ctx));
 
-$api="https://api.github.com/repos/$githubUser/$repo/releases/latest";
-
-$options=[
-"http"=>[
-"header"=>"User-Agent: TPG-Updater"
-]
-];
-
-$context=stream_context_create($options);
-$json=file_get_contents($api,false,$context);
-
-if(!$json){
-die("Failed to contact GitHub\n");
+// unzip it
+ $z = new ZipArchive;
+if ($z->open("update.zip") === TRUE) {
+    $z->extractTo("update_temp");
+    $z->close();
+} else {
+    die("Failed to unzip\n");
 }
 
-$data=json_decode($json,true);
-
-$latest=$data["tag_name"];
-
-echo "Latest version: $latest\n";
-
-/* ---------- compare versions ---------- */
-
-if($latest==$currentVersion){
-
-echo "\nSystem already up to date.\n";
-exit;
-
+// find the folder github created (it's usually named hash-user-repo)
+ $files = scandir("update_temp");
+ $src = "";
+foreach ($files as $f) {
+    if ($f != '.' && $f != '..') {
+        $src = "update_temp/" . $f . "/";
+        break;
+    }
 }
 
-echo "\nUpdate required.\n";
-
-/* ---------- download zip ---------- */
-
-$zipUrl=$data["zipball_url"];
-
-echo "Downloading update...\n";
-
-$zipData=file_get_contents($zipUrl,false,$context);
-
-file_put_contents("update.zip",$zipData);
-
-/* ---------- extract ---------- */
-
-$zip=new ZipArchive;
-
-if($zip->open("update.zip")===TRUE){
-
-$zip->extractTo("update_temp");
-
-$zip->close();
-
-}else{
-die("Extraction failed\n");
+// recursive copy helper
+function copyDir($src, $dst) {
+    $dir = opendir($src);
+    @mkdir($dst);
+    while (false !== ($file = readdir($dir))) {
+        if (($file != '.') && ($file != '..')) {
+            if (is_dir($src . '/' . $file)) {
+                copyDir($src . '/' . $file, $dst . '/' . $file);
+            } else {
+                // skip git stuff just in case
+                if (strpos($file, '.git') === false) {
+                    copy($src . '/' . $file, $dst . '/' . $file);
+                }
+            }
+        }
+    }
+    closedir($dir);
 }
 
-echo "Extracted.\n";
+// do the copy
+copyDir($src, '.');
 
-/* ---------- find extracted folder ---------- */
+// update local version file
+file_put_contents($verFile, $latest);
 
-$dirs=scandir("update_temp");
-
-foreach($dirs as $d){
-
-if($d!="." && $d!=".."){
-$source="update_temp/".$d."/";
-break;
+// cleanup helper
+function rrmdir($dir) {
+    foreach (glob($dir . '/*') as $file) {
+        if (is_dir($file)) rrmdir($file);
+        else unlink($file);
+    }
+    rmdir($dir);
 }
 
-}
-
-/* ---------- copy files ---------- */
-
-$iterator=new RecursiveIteratorIterator(
-new RecursiveDirectoryIterator($source,RecursiveDirectoryIterator::SKIP_DOTS),
-RecursiveIteratorIterator::SELF_FIRST
-);
-
-foreach($iterator as $file){
-
-$rel=str_replace($source,"",$file->getPathname());
-
-$target="./".$rel;
-
-/* skip git files */
-
-if(strpos($rel,".git")===0) continue;
-
-if($file->isDir()){
-
-if(!is_dir($target)){
-mkdir($target,0777,true);
-}
-
-}else{
-
-copy($file->getPathname(),$target);
-
-}
-
-}
-
-echo "Files updated.\n";
-
-/* ---------- save version ---------- */
-
-file_put_contents($currentVersionFile,$latest);
-
-/* ---------- cleanup ---------- */
-
-function del($dir){
-
-foreach(scandir($dir) as $f){
-
-if($f=="."||$f=="..") continue;
-
-$p="$dir/$f";
-
-if(is_dir($p)) del($p);
-else unlink($p);
-
-}
-
-rmdir($dir);
-
-}
-
-del("update_temp");
-
+rrmdir("update_temp");
 unlink("update.zip");
 
-echo "Update complete. Now running version $latest\n";
+echo "Done. Now on $latest\n";
 ?>

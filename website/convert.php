@@ -1,155 +1,150 @@
 <?php
+set_time_limit(0);
+ignore_user_abort(true);
+while (ob_get_level()) { ob_end_clean(); }
 header("Content-Type: text/plain; charset=utf-8");
-header('X-Accel-Buffering: no'); 
-set_time_limit(0); 
+header("Cache-Control: no-cache");
+header('X-Accel-Buffering: no');
+ob_implicit_flush(true);
 
-// OS Detection for Binary Extension
- $isWin = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
- $ffmpegName = $isWin ? 'ffmpeg.exe' : 'ffmpeg';
+function logMsg($msg) {
+    echo "[" . date("H:i:s") . "] " . $msg . "\n";
+    flush();
+}
 
-// Path Finding Logic
- $ffmpeg = null;
- $searchPaths = [
-    __DIR__ . DIRECTORY_SEPARATOR . "bin" . DIRECTORY_SEPARATOR . $ffmpegName,
-    __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "bin" . DIRECTORY_SEPARATOR . $ffmpegName
+$isWin = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
+$ffmpegName = $isWin ? 'ffmpeg.exe' : 'ffmpeg';
+$searchPaths = [
+    __DIR__ . '/bin/' . $ffmpegName,
+    __DIR__ . '/../bin/' . $ffmpegName
 ];
 
-foreach ($searchPaths as $path) {
-    if (file_exists($path)) {
-        $ffmpeg = realpath($path);
+$ffmpeg = null;
+foreach ($searchPaths as $p) {
+    if (is_file($p) && is_executable($p)) {
+        $ffmpeg = $p;
         break;
     }
 }
 
 if (!$ffmpeg) {
-    $ffmpeg = shell_exec($isWin ? "where ffmpeg" : "which ffmpeg");
-    $ffmpeg = $ffmpeg ? trim($ffmpeg) : null;
+    $sysPath = shell_exec($isWin ? "where ffmpeg" : "which ffmpeg 2>/dev/null");
+    if ($sysPath) $ffmpeg = trim($sysPath);
 }
 
 if (!$ffmpeg) {
-    die("[FATAL ERROR] ffmpeg not found in bin folder or system PATH.");
+    logMsg("CRITICAL: FFmpeg binary missing.");
+    exit;
 }
 
-// Temporary directory
- $tempDir = __DIR__ . DIRECTORY_SEPARATOR . "temp_eq" . DIRECTORY_SEPARATOR;
-if (!is_dir($tempDir)) {
-    @mkdir($tempDir, 0777, true);
+$tempDir = rtrim(__DIR__ . '/temp_eq', '/\\') . DIRECTORY_SEPARATOR;
+if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+
+$outputDir = isset($_POST['outputPath']) ? $_POST['outputPath'] : (getenv('USERPROFILE') ?: getenv('HOME') . '/Videos/EQ');
+if (!is_dir($outputDir)) mkdir($outputDir, 0777, true);
+
+$realOutputDir = realpath($outputDir);
+if (!$realOutputDir || !is_dir($realOutputDir)) {
+    logMsg("ERROR: Invalid output path.");
+    exit;
 }
 
-// Get Output Path
- $outputDir = isset($_POST['outputPath']) ? $_POST['outputPath'] : '';
-if (empty($outputDir)) {
-    $userProfile = getenv('USERPROFILE') ?: getenv('HOME') ?: __DIR__;
-    $outputDir = $userProfile . DIRECTORY_SEPARATOR . "Videos" . DIRECTORY_SEPARATOR . "EQ" . DIRECTORY_SEPARATOR;
-}
- $outputDir = rtrim($outputDir, '/\\') . DIRECTORY_SEPARATOR;
-if (!is_dir($outputDir)) {
-    @mkdir($outputDir, 0777, true);
-}
+$gains = (array)json_decode($_POST['gains'], true);
+$preAmp = floatval($_POST['preAmp'] ?? 1);
+$preAmp = max(-30, min($preAmp, 30));
 
-// Prepare FFmpeg Filter
- $gains = json_decode($_POST['gains']);
- $preAmp = floatval($_POST['preAmp'] ?? 1); 
- $preAmp = min($preAmp, 2); 
-
- $bands = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
- $filterParts = [];
+$bands = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 20000];
+$eqParts = [];
 foreach ($bands as $i => $freq) {
-    $g = $gains[$i] ?? 0;
-    $filterParts[] = "equalizer=f=$freq:width_type=q:w=1:g=$g";
+    $g = floatval($gains[$i] ?? 0);
+    $eqParts[] = "equalizer=f=$freq:width_type=q:w=1:g=$g";
 }
 
- $volFactor = pow(10, $preAmp / 20);
- $finalFilter = implode(',', $filterParts) . ",volume=$volFactor,dynaudnorm=f=200,alimiter=limit=0.98";
+$vol = pow(10, $preAmp / 20);
+$finalFilter = "volume=$vol," . implode(',', $eqParts);
 
-// Function to process a single file
-function processFile($inputPath, $outputDir, $ffmpeg, $finalFilter, $tempDir) {
-    if (!file_exists($inputPath)) {
-        echo "[NOT FOUND] Skipping: $inputPath\n\n";
+function processFile($input, $outDir, $bin, $filter, $tmp) {
+    if (!file_exists($input)) {
+        logMsg("WARN: File not found: " . basename($input));
         return;
     }
 
-    $info = pathinfo($inputPath);
-    $timestamp = date("His");
-    $tempWav = $tempDir . "temp_clean_" . $timestamp . ".wav";
-    $outputPath = $outputDir . $info['basename'];
+    $info = pathinfo($input);
+    $tmpWav = $tmp . uniqid('proc_', true) . '.wav';
+    $outName = $info['filename'] . '_eq_' . time() . '.mp3';
+    $finalPath = $outDir . $outName;
 
-    echo "[STEP 1/2] Decoding & Cleaning: " . $info['basename'] . "...\n";
-    $cmd1 = "\"$ffmpeg\" -y -i " . escapeshellarg($inputPath) . " " . escapeshellarg($tempWav) . " 2>&1";
-    exec($cmd1);
+    $start = microtime(true);
 
-    if (!file_exists($tempWav)) {
-        echo "[FAILED] Could not decode file.\n\n";
-        return;
-    }
-
-    echo "[STEP 2/2] Applying EQ & Encoding 320k MP3...\n";
-    $cmd2 = "\"$ffmpeg\" -y -i " . escapeshellarg($tempWav) . 
-           " -af " . escapeshellarg($finalFilter) . 
-           " -c:a libmp3lame -b:a 320k " . 
-           escapeshellarg($outputPath) . " 2>&1";
+    logMsg("INFO: Decoding " . $info['basename']);
     
-    exec($cmd2, $shellOutput, $status);
-    if ($status === 0 && file_exists($outputPath)) {
-        echo "[SUCCESS] Marshall EQ applied successfully.\n[OUTPUT] Saved to: $outputPath\n\n";
-    } else {
-        echo "[FAILED] Encoding error: ". end($shellOutput) . "\n\n";
+    $cmd1 = escapeshellcmd($bin) . " -y -i " . escapeshellarg($input) . " " . escapeshellarg($tmpWav) . " 2>&1";
+    @exec($cmd1, $out1, $ret1);
+
+    if (!file_exists($tmpWav) || filesize($tmpWav) === 0) {
+        logMsg("ERROR: Decoding failed.");
+        return;
     }
 
-    if (file_exists($tempWav)) @unlink($tempWav);
-    unset($shellOutput);
-    @ob_flush(); flush();
+    logMsg("INFO: Encoding MP3 (320k)");
+    $cmd2 = escapeshellcmd($bin) . " -y -i " . escapeshellarg($tmpWav) .
+             " -af " . escapeshellarg($filter) .
+             " -c:a libmp3lame -b:a 320k " .
+             escapeshellarg($finalPath) . " 2>&1";
+
+    passthru($cmd2, $ret2);
+
+    $elapsed = round(microtime(true) - $start, 2);
+
+    if (file_exists($finalPath) && filesize($finalPath) > 0) {
+        logMsg("DONE: " . $outName . " (" . $elapsed . "s)");
+    } else {
+        logMsg("ERROR: Encoding failed.");
+    }
+
+    if (file_exists($tmpWav)) @unlink($tmpWav);
 }
 
-// --- LOGIC HANDLER ---
+$action = $_POST['action'] ?? '';
 
- $action = isset($_POST['action']) ? $_POST['action'] : '';
-
-// CASE 1: Single File Upload
 if ($action === 'single' && isset($_FILES['audioFile'])) {
-    $file = $_FILES['audioFile'];
-    if ($file['error'] === 0) {
-        $targetPath = $tempDir . basename($file['name']);
-        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-            echo "[UPLOAD] File received: " . $file['name'] . "\n";
-            processFile($targetPath, $outputDir, $ffmpeg, $finalFilter, $tempDir);
-            @unlink($targetPath); // Clean up uploaded source
-        } else {
-            echo "[ERROR] Could not move uploaded file to temp.\n";
+    $f = $_FILES['audioFile'];
+    if ($f['error'] === 0) {
+        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($f['name']));
+        $src = $tempDir . $safeName;
+        if (move_uploaded_file($f['tmp_name'], $src)) {
+            processFile($src, $realOutputDir, $ffmpeg, $finalFilter, $tempDir);
+            @unlink($src);
         }
-    } else {
-        echo "[ERROR] Upload error code: " . $file['error'] . "\n";
     }
 }
-// CASE 2: Batch Upload (Browser Mode)
 elseif ($action === 'batch' && isset($_FILES['batchFiles'])) {
-    echo "[INFO] Processing batch upload...\n";
-    foreach ($_FILES['batchFiles']['name'] as $i => $name) {
-        if ($_FILES['batchFiles']['error'][$i] === 0) {
-            $targetPath = $tempDir . basename($name);
-            if (move_uploaded_file($_FILES['batchFiles']['tmp_name'][$i], $targetPath)) {
-                echo "[UPLOAD] Received: $name\n";
-                processFile($targetPath, $outputDir, $ffmpeg, $finalFilter, $tempDir);
-                @unlink($targetPath);
+    $files = $_FILES['batchFiles'];
+    for ($i = 0; $i < count($files['name']); $i++) {
+        if ($files['error'][$i] === 0) {
+            $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $files['name'][$i]);
+            $src = $tempDir . $safeName;
+            if (move_uploaded_file($files['tmp_name'][$i], $src)) {
+                processFile($src, $realOutputDir, $ffmpeg, $finalFilter, $tempDir);
+                @unlink($src);
             }
         }
     }
 }
-// CASE 3: Path List (Electron/Local Server Mode)
 elseif (isset($_POST['pathList'])) {
-    $queueFile = $tempDir . "queue.txt";
-    file_put_contents($queueFile, $_POST['pathList']);
-    $handle = fopen($queueFile, "r");
-    if ($handle) {
-        while (($line = fgets($handle)) !== false) {
-            $inputPath = trim($line);
-            if ($inputPath === "-1" || empty($inputPath)) break;
-            processFile($inputPath, $outputDir, $ffmpeg, $finalFilter, $tempDir);
+    $listFile = $tempDir . "queue_" . uniqid() . ".txt";
+    file_put_contents($listFile, $_POST['pathList']);
+    $h = fopen($listFile, "r");
+    if ($h) {
+        while (($line = fgets($h)) !== false) {
+            $line = trim($line);
+            if ($line === "-1" || empty($line)) break;
+            processFile($line, $realOutputDir, $ffmpeg, $finalFilter, $tempDir);
         }
-        fclose($handle);
+        fclose($h);
     }
-    @unlink($queueFile);
+    @unlink($listFile);
 }
 
-echo "--- BATCH COMPLETED ---";
+logMsg("INFO: Batch complete.");
 ?>

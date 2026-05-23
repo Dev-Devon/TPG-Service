@@ -1,0 +1,54 @@
+# Netscape HTTP Cookie File
+# Mock cookies file for testing video downloads
+# Format: domain  include_subdomains  path  secure  expiration  name  value
+
+# YouTube
+.youtube.com	TRUE	/	FALSE	1711603200	SSID	abcd1234efgh5678
+.youtube.com	TRUE	/	FALSE	1711603200	HSID	qwerty0987654321
+.youtube.com	FALSE	/	FALSE	1711603200	PREF	f1=50000000&f6=8
+.youtube.com	FALSE	/	FALSE	1711603200	YSC	xyzABC1234567890
+
+# Vimeo
+.vimeo.com	TRUE	/	FALSE	1711603200	vimeo_session	vim123456session
+.vimeo.com	FALSE	/	FALSE	1711603200	vimeo_secure	secureVimeo987
+.vimeo.com	TRUE	/	FALSE	1711603200	vimeo_prefs	dark_mode=1
+
+# Dailymotion
+.dailymotion.com	TRUE	/	FALSE	1711603200	dm_session	session123dm
+.dailymotion.com	FALSE	/	FALSE	1711603200	dm_secure_cookie	secureDM456
+.dailymotion.com	TRUE	/	FALSE	1711603200	dm_prefs	autoplay=false
+
+# TikTok
+.tiktok.com	TRUE	/	FALSE	1711603200	tiktok_session	tt12345session
+.tiktok.com	FALSE	/	FALSE	1711603200	tiktok_secure	secureTT67890
+.tiktok.com	TRUE	/	FALSE	1711603200	tiktok_prefs	language=en-US
+
+# Twitch
+.twitch.tv	TRUE	/	FALSE	1711603200	auth-token	abc123twitchtoken
+.twitch.tv	FALSE	/	FALSE	1711603200	twitch_user	uid987654321
+.twitch.tv	TRUE	/	FALSE	1711603200	twitch_preferences	theme=dark
+
+# Netflix (example; real cookies require login)
+.netflix.com	TRUE	/	FALSE	1711603200	netflix_session	nf_session_abc123
+.netflix.com	FALSE	/	FALSE	1711603200	netflix_secure	secureNF456
+.netflix.com	TRUE	/	FALSE	1711603200	netflix_pref	subtitles=en
+
+# Hulu
+.hulu.com	TRUE	/	FALSE	1711603200	hulu_session	huluABC123
+.hulu.com	FALSE	/	FALSE	1711603200	hulu_secure	secureHULU456
+.hulu.com	TRUE	/	FALSE	1711603200	hulu_prefs	autoplay=true
+
+# Disney+
+.disneyplus.com	TRUE	/	FALSE	1711603200	disney_session	dp_session_123
+.disneyplus.com	FALSE	/	FALSE	1711603200	disney_secure	secureDP456
+.disneyplus.com	TRUE	/	FALSE	1711603200	disney_prefs	language=en-US
+
+# Crunchyroll
+.crunchyroll.com	TRUE	/	FALSE	1711603200	crunchy_session	crunch123session
+.crunchyroll.com	FALSE	/	FALSE	1711603200	crunch_secure	secureCR789
+.crunchyroll.com	TRUE	/	FALSE	1711603200	crunch_prefs	subtitle_lang=EN
+
+# Adult / general test sites (mock, non-real)
+.pornhub.com	TRUE	/	FALSE	1711603200	pornhub_session	pb123abc
+.xvideos.com	TRUE	/	FALSE	1711603200	xv_session	xv456def
+.redtube.com	TRUE	/	FALSE	1711603200	rt_session	rt789ghi

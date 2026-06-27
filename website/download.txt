@@ -66,15 +66,21 @@ foreach ($urls as $targetUrl) {
     // Build command securely
     $cmd = $baseCmd . " --user-agent " . escapeshellarg($ua) . " --referer " . $safeRef . " -o " . $outTemplate;
 
+    // CONDITIONAL LOGIC:
+    // Only apply "Android Client" extraction if it is specifically YouTube.
+    // Other domains may fail or behave unexpectedly if forced to use the YouTube player client.
+    if (strpos($domain, 'youtube') !== false || strpos($domain, 'youtu.be') !== false) {
+        $cmd .= " --extractor-args \"youtube:player_client=android\"";
+    }
+
     if ($dlVideo === "1") {
-        // Real high quality video + best audio merging
-        $fmt = "bestvideo[height<=?{$res}]+bestaudio/best";
+        // Best video + audio merging
+        $fmt = "bestvideo[height<={$res}]+bestaudio/best[height<={$res}]";
         $cmd .= " -f " . escapeshellarg($fmt) . " --merge-output-format mp4";
     }
 
     if ($dlAudio === "1") {
-        // Best possible audio quality
-        $cmd .= " -f bestaudio --audio-quality 0 -x --audio-format mp3";
+        $cmd .= " -x --audio-format mp3";
     }
 
     $cmd .= " " . $safeUrl . " 2>&1";

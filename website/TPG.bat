@@ -32,50 +32,113 @@
 ::
 ::978f952a14a936cc963da21a135fa983
 @echo off
-setlocal
+setlocal enabledelayedexpansion
+title TPG Service
 
-set PORT=8000
-set WEBSITE_FOLDER=website
-set SERVER_ADDRESS=localhost:%PORT%
-set "WEBSITE_ROOT=%~dp0%WEBSITE_FOLDER%"
-set "PHP_EXEC="
+:: Set variables
+set "APP_NAME=TPG"
+set "PORT=8000"
+set "SERVER_ADDRESS=localhost:%PORT%"
+set "SCRIPT_DIR=%~dp0"
+set "WEBSITE_ROOT=%SCRIPT_DIR%"
+set "PHP_EXE=%SCRIPT_DIR%bin\php.exe"
+set "LOG_FILE=%TEMP%\%APP_NAME%.log"
 
-:: Check for local/portable PHP first
-set "PHP_EXEC_LOCAL=%~dp0bin\php.exe"
-if exist "%PHP_EXEC_LOCAL%" (
-    set "PHP_EXEC=%PHP_EXEC_LOCAL%"
-    goto START_SERVER
-)
-
-:: Fallback to system PHP in PATH
-where php >nul 2>&1
+:: Kill existing TPG.exe process
+:CHECK_AND_KILL
+tasklist /FI "IMAGENAME eq TPG.exe" 2>NUL | find /I "TPG.exe" >NUL
 if not errorlevel 1 (
-    set "PHP_EXEC=php"
-    goto START_SERVER
+    echo %date% %time% - Found TPG.exe, killing it... >> "%LOG_FILE%"
+    taskkill /F /IM TPG.exe >NUL 2>&1
+    timeout /t 2 /nobreak >NUL
+    goto CHECK_AND_KILL
 )
 
-:: Error if PHP is not found
-echo ERROR: PHP executable not found.
-pause
-goto :EOF
+:: Check if PHP exists
+if not exist "%PHP_EXE%" (
+    echo ERROR: PHP executable not found at %PHP_EXE%
+    echo %date% %time% - ERROR: PHP not found >> "%LOG_FILE%"
+    echo Press any key to exit...
+    pause >NUL
+    exit /b 1
+)
+
+:: Check if index.html exists
+if not exist "%WEBSITE_ROOT%index.html" (
+    echo ERROR: index.html not found in %WEBSITE_ROOT%
+    echo %date% %time% - ERROR: index.html not found >> "%LOG_FILE%"
+    echo Press any key to exit...
+    pause >NUL
+    exit /b 1
+)
+
+:: Find available port
+:CHECK_PORT
+netstat -ano 2>NUL | find ":%PORT%" >NUL 2>&1
+if errorlevel 1 (
+    set "SERVER_ADDRESS=localhost:%PORT%"
+    goto START_SERVER
+) else (
+    set /a PORT+=1
+    goto CHECK_PORT
+)
 
 :START_SERVER
-if not exist "%WEBSITE_ROOT%" (
-    echo ERROR: Website folder '%WEBSITE_FOLDER%' not found.
-    pause
-    goto :EOF
-)
-
+echo %date% %time% - Starting server on http://%SERVER_ADDRESS% >> "%LOG_FILE%"
 echo Starting PHP server on http://%SERVER_ADDRESS%
-echo Press Ctrl+C to stop.
+echo Application running from: %WEBSITE_ROOT%
 echo.
 
-start "" http://%SERVER_ADDRESS%
-timeout /t 1 /nobreak >nul
+:: Start PHP server in background (FIXED - removed /B and used START properly)
+start /B "" "%PHP_EXE%" -S %SERVER_ADDRESS% -t "%WEBSITE_ROOT%"
 
-"%PHP_EXEC%" -S %SERVER_ADDRESS% -t "%WEBSITE_ROOT%"
+:: Wait for server to start
+timeout /t 3 /nobreak >NUL
 
-echo Server stopped.
-pause
+:: Open browser
+start "" "http://%SERVER_ADDRESS%"
 
-endlocal
+:: Start monitoring process (this runs in the same window)
+echo Server is running. Monitoring...
+echo.
+echo [Press Ctrl+C to stop the server and exit]
+
+:MONITOR_LOOP
+:: Check every 1 minute if server is running
+timeout /t 60 /nobreak >NUL
+
+:: Check if PHP server process is still running
+tasklist /FI "IMAGENAME eq php.exe" 2>NUL | find /I "php.exe" >NUL
+if errorlevel 1 (
+    echo %date% %time% - PHP server stopped unexpectedly >> "%LOG_FILE%"
+    echo.
+    echo PHP server has stopped unexpectedly.
+    echo Closing application...
+    timeout /t 2 /nobreak >NUL
+    
+    :: Kill any TPG.exe
+    taskkill /F /IM TPG.exe >NUL 2>&1
+    timeout /t 1 /nobreak >NUL
+    
+    :: Kill any remaining php.exe
+    taskkill /F /IM php.exe >NUL 2>&1
+    
+    echo %date% %time% - Application closed >> "%LOG_FILE%"
+    exit
+)
+
+:: Check if TPG.exe is still running (if it restarted)
+tasklist /FI "IMAGENAME eq TPG.exe" 2>NUL | find /I "TPG.exe" >NUL
+if not errorlevel 1 (
+    echo %date% %time% - Found new TPG.exe instance >> "%LOG_FILE%"
+    echo Found TPG.exe running. Restarting server...
+    taskkill /F /IM TPG.exe >NUL 2>&1
+    taskkill /F /IM php.exe >NUL 2>&1
+    timeout /t 2 /nobreak >NUL
+    
+    :: Restart server (FIXED)
+    start /B "" "%PHP_EXE%" -S %SERVER_ADDRESS% -t "%WEBSITE_ROOT%"
+    timeout /t 2 /nobreak >NUL
+)
+
+goto MONITOR_LOOP

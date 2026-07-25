@@ -1,7 +1,7 @@
 ::[Bat To Exe Converter]
 ::
 ::YAwzoRdxOk+EWAjk
-::fBw5plQjdCuDJGmW+0UiKRZZRQqFAFuoCb8Z6/zHx96qjnEtRu01fYzP5eayN+UR+UzwcKor12xTm8QCM0oWdxGkDg==
+::fBw5plQjdCyDJGyX8VAjFB9VXg+AAE+1BaAR7ebv/Nagq1kiZucvd7Pv6pPOE+UB/EzncKo603hJkd8JMB1ZaBuoYQEL+CBLtWvl
 ::YAwzuBVtJxjWCl3EqQJgSA==
 ::ZR4luwNxJguZRRnk
 ::Yhs/ulQjdF+5
@@ -26,7 +26,7 @@
 ::ZQ0/vhVqMQ3MEVWAtB9wSA==
 ::Zg8zqx1/OA3MEVWAtB9wSA==
 ::dhA7pRFwIByZRRnk
-::Zh4grVQjdCuDJGmW+0UiKRZZRQqFAFuoCb8Z6/zHx96qjnEtRu01fYzP5eayFNA0onO3PNgozn86
+::Zh4grVQjdCyDJGyX8VAjFB9VXg+AAE+1BaAR7ebv/Nagq1kiZucvd7Pv6pPOE+UB/EzncKo603hJkd8JMC9oWVyudgpU
 ::YB416Ek+ZG8=
 ::
 ::
@@ -50,6 +50,16 @@ tasklist /FI "IMAGENAME eq TPG.exe" 2>NUL | find /I "TPG.exe" >NUL
 if not errorlevel 1 (
     echo %date% %time% - Found TPG.exe, killing it... >> "%LOG_FILE%"
     taskkill /F /IM TPG.exe >NUL 2>&1
+    timeout /t 2 /nobreak >NUL
+    goto CHECK_AND_KILL
+)
+
+:: Kill existing TPG.exe process
+:CHECK_AND_KILL
+tasklist /FI "IMAGENAME eq TPG.exe" 2>NUL | find /I "CLI.exe" >NUL
+if not errorlevel 1 (
+    echo %date% %time% - Found CLI.exe, killing it... >> "%LOG_FILE%"
+    taskkill /F /IM CLI.exe >NUL 2>&1
     timeout /t 2 /nobreak >NUL
     goto CHECK_AND_KILL
 )

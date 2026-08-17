@@ -10,7 +10,7 @@ ini_set('display_errors',1);
    ---------------------------------------------------------- */
 
  $homeDir = getenv('USERPROFILE') ?: getenv('HOME');
- $saveFolder = $homeDir . DIRECTORY_SEPARATOR . 'Videos' . DIRECTORY_SEPARATOR . 'Compress' . DIRECTORY_SEPARATOR;
+ $saveFolder = D:\ThisPC\Videos\Compress'';
 
 if(!is_dir($saveFolder)){
     if(!mkdir($saveFolder,0777,true)){

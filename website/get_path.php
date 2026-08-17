@@ -3,5 +3,5 @@
  $home = getenv('USERPROFILE') ?: getenv('HOME');
  $ds = DIRECTORY_SEPARATOR;
 // Return standard forward slashes for web compatibility
-echo str_replace('\\', '/', $home . $ds . 'Videos' . $ds . 'Download');
+echo str_replace('D:\ThisPC\Videos\Download');
 ?>

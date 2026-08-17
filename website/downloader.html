@@ -171,7 +171,7 @@
       <div class="path-row">
         <div class="input-group">
           <label for="path">Destination Folder</label>
-          <input class="text-input" id="path" type="text" placeholder="Loading default path..." readonly>
+          <input class="text-input" id="path" type="text" placeholder="Loading default path..." value="D:\ThisPC\Videos\Download">
         </div>
         <button class="btn-outline" id="browseBtn" type="button"><i class="fas fa-folder-tree"></i> Browse</button>
       </div>
@@ -239,19 +239,6 @@ function showToast(msg, type) {
 document.getElementById("mobileToggle").addEventListener("click", function() {
   document.getElementById("sidebar").classList.toggle("open");
 });
-
-// load path
-fetch("get_path.php")
-  .then(function(r) { 
-    if(r.ok) return r.text(); 
-  })
-  .then(function(p) { 
-    var pathInput = document.getElementById("path");
-    if(!pathInput.value || pathInput.value.includes("Loading")) pathInput.value = p; 
-  })
-  .catch(function() { 
-    document.getElementById("path").placeholder = "Enter path manually"; 
-  });
 
 document.getElementById("videoCheck").addEventListener("change", function(e) {
   document.getElementById("resolutionRow").classList.toggle("visible", e.target.checked);

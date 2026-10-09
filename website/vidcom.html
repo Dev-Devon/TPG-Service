@@ -2,131 +2,1158 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Video Compressor</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- quick fix for compressor specific styles since css file is shared -->
 <style>
-.file-zone { border: 1.5px dashed var(--card-border); border-radius: var(--radius-xs); padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; margin-bottom: 22px; background: rgba(0,0,0,0.1); }
-.file-zone:hover { border-color: var(--accent); background: rgba(0,223,162,0.02); }
-.file-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.file-icon { font-size: 1.5rem; color: var(--muted); margin-bottom: 8px; transition: all 0.3s; }
-.file-zone:hover .file-icon { color: var(--accent); transform: translateY(-2px); }
-.file-text { font-size: 0.85rem; color: var(--fg-dim); }
-.file-text span { color: var(--accent); font-weight: 600; }
-.file-hint { font-size: 0.73rem; color: var(--muted); margin-top: 4px; }
+/* ============================================================
+   TPG · DARK PENCIL · VIDEO COMPRESSOR
+   Graphite on charcoal. Console layout: flow left, log right.
+   Every JS hook preserved.
+   ============================================================ */
 
-.select-wrapper { position: relative; margin-bottom: 22px; }
-.select-wrapper::after { content: "\f107"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 12px; pointer-events: none; }
-.styled-select { width: 100%; padding: 13px 40px 13px 18px; border-radius: var(--radius-xs); border: 1px solid var(--card-border); background: rgba(0,0,0,0.3); color: var(--fg); font-size: 0.88rem; font-family: inherit; appearance: none; -webkit-appearance: none; cursor: pointer; transition: all 0.3s ease; }
-.styled-select option { background: var(--bg-elevated); color: var(--fg); }
+:root{
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
 
-.progress-wrap { margin-top: 24px; }
-.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.progress-label { font-size: 0.72rem; font-weight: 600; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-.progress-percent { font-size: 0.82rem; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
-.progress-track { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.4); overflow: hidden; position: relative; }
-.progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-secondary)); width: 0%; transition: width 0.4s ease; position: relative; }
-.log-wrap { margin-top: 22px; }
-.log-container { background: rgba(0,0,0,0.45); border: 1px solid var(--card-border); border-radius: var(--radius-sm); overflow: hidden; }
-.log-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--card-border); background: rgba(16,18,26,0.6); font-size: 0.72rem; font-weight: 600; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-.terminal-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
-#log { padding: 16px; max-height: 220px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7; color: var(--fg-dim); word-break: break-all; }
-.error { color: var(--error); }
-.success { color: var(--success); }
-.info { color: var(--info); }
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
 
-#prog { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
 
-/* manual positioning tweaks for this page */
-.orb-1-fix { top: -80px; right: -80px; width: 420px; height: 420px; background: radial-gradient(circle, rgba(0,223,162,0.07) 0%, transparent 70%); animation: orbDrift1 16s ease-in-out infinite; }
-.orb-2-fix { bottom: 5%; left: -120px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(0,180,216,0.05) 0%, transparent 70%); animation: orbDrift2 20s ease-in-out infinite; }
+  --accent:       #D4C9A8;
+  --accent-lo:    #C4B894;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+  --error:        #C97B5A;
+  --warning:      #C99A5A;
+  --info:         #A8B29E;
+  --muted:        rgba(237,231,217,.45);
+  --fg-dim:       rgba(237,231,217,.65);
+  --fg:           #EDE7D9;
+  --bg-elevated:  var(--paper-raise);
+  --card-border:  var(--hair);
+  --radius:       2px;
+  --radius-sm:    2px;
+  --radius-xs:    2px;
+
+  --max:          1360px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  font-size:17px;
+  font-weight:500;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Graphite grain */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:.14;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+  mix-blend-mode:screen;
+}
+
+/* Vignette */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+/* Pencil top stroke */
+.top-accent{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:2px;
+  z-index:999;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(212,201,168,.10) 15%,
+    var(--accent) 50%,
+    rgba(212,201,168,.10) 85%,
+    transparent 100%);
+  background-size:200% 100%;
+  animation:accentSlide 6s linear infinite;
+  opacity:.7;
+}
+@keyframes accentSlide{
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Halftone blooms */
+.orb{
+  position:fixed;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+  opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1-fix{ top:-120px; right:-120px; width:440px; height:440px; }
+.orb-2-fix{ bottom:-120px; left:-120px; width:360px; height:360px; }
+
+/* ============================================================
+   SHEET
+   ============================================================ */
+.sheet{
+  position:relative;
+  z-index:1;
+  width:100%;
+  padding:0 40px;
+}
+.sheet__inner{
+  max-width:var(--max);
+  margin:0 auto;
+  position:relative;
+}
+/* content-wrapper kept as a passthrough */
+.content-wrapper{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+}
+
+/* ============================================================
+   RUNNING HEAD
+   ============================================================ */
+.runhead{
+  padding-top:24px;
+  border-bottom:1px solid var(--hair);
+}
+.runhead__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding-bottom:14px;
+  flex-wrap:wrap;
+}
+.runhead__folios{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.runhead__folio strong{
+  color:var(--ink);
+  font-weight:600;
+}
+.runhead__nav{
+  display:flex;
+  gap:0;
+  border:1px solid var(--hair);
+  border-radius:var(--radius-xs);
+  background:var(--paper-raise);
+  overflow:hidden;
+  flex-wrap:wrap;
+}
+.runhead__nav a{
+  padding:10px 16px 9px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  text-decoration:none;
+  border-right:1px solid var(--hair);
+  transition:background .2s ease, color .2s ease;
+  white-space:nowrap;
+}
+.runhead__nav a:last-child{ border-right:0; }
+.runhead__nav a:hover{ color:var(--ink); background:var(--paper-deep); }
+.runhead__nav a.active{
+  color:var(--paper);
+  background:var(--accent);
+}
+.runhead__nav a i{ margin-right:7px; font-size:.8rem; }
+
+.back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px 9px;
+  border-radius:var(--radius-xs);
+  border:1px solid var(--hair-strong);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  text-decoration:none;
+  cursor:pointer;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.back-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+.back-btn i{ font-size:.8rem; transition:transform .25s ease; }
+.back-btn:hover i{ transform:translateX(-3px); }
+
+/* ============================================================
+   TITLE BLOCK
+   ============================================================ */
+.titleblock{
+  padding:72px 0 44px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:64px;
+  align-items:end;
+  position:relative;
+}
+.titleblock__main{ position:relative; }
+.titleblock__meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:26px;
+  flex-wrap:wrap;
+}
+
+.page-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  padding:8px 16px 7px 14px;
+  border-radius:var(--radius-xs);
+  background:var(--paper-raise);
+  border:1px solid var(--hair-strong);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.page-badge .pulse-dot{
+  width:8px; height:8px;
+  border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+
+.version,
+h4{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin:0;
+}
+
+.titleblock h1{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:clamp(2.75rem, 6.4vw, 5rem);
+  line-height:.96;
+  letter-spacing:-.024em;
+  margin-bottom:18px;
+  color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.14),
+    -1px 0 0 rgba(212,201,168,.14);
+}
+.titleblock h1 em,
+.titleblock h1 .grad{
+  font-style:italic;
+  color:var(--accent);
+  background:none;
+  -webkit-text-fill-color:currentColor;
+}
+.deck,
+.hero .sub,
+.page-hero .sub{
+  font-size:1.0625rem;
+  font-weight:500;
+  color:var(--ink-70);
+  max-width:52ch;
+  line-height:1.75;
+}
+
+/* Spec column */
+.titleblock__spec{
+  border-left:1px solid var(--hair);
+  padding-left:26px;
+  padding-bottom:6px;
+}
+.spec{
+  display:grid;
+  gap:0;
+  margin-bottom:22px;
+}
+.spec__row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 0;
+  border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+.spec__dimension{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:.625rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1;
+  height:1px;
+  background:var(--hair-strong);
+  position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:"";
+  position:absolute;
+  top:-3px;
+  width:1px; height:7px;
+  background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* Deco */
+.deco{ position:absolute; pointer-events:none; }
+.deco-ring{
+  width:120px; height:120px;
+  border:1px solid var(--hair-strong);
+  border-radius:50%;
+  top:-10px; right:-180px;
+  animation:spinSlow 45s linear infinite;
+}
+.deco-ring::after{
+  content:"";
+  position:absolute;
+  width:6px; height:6px;
+  background:var(--stamp);
+  border-radius:1px;
+  top:-3px; left:50%;
+  transform:translateX(-50%);
+}
+.deco-ring-inner{
+  width:78px; height:78px;
+  border:1px dashed var(--hair);
+  border-radius:50%;
+  top:15px; right:-160px;
+  animation:spinSlow 32s linear infinite reverse;
+}
+.deco-dots{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:11px;
+  top:-20px; right:-180px;
+  margin-top:160px;
+}
+.deco-dots span{
+  width:4px; height:4px;
+  border-radius:50%;
+  background:rgba(212,201,168,.45);
+}
+.deco-dots span:nth-child(3n){ background:rgba(201,123,90,.55); }
+.deco-dots span:nth-child(7){
+  width:6px; height:6px;
+  background:rgba(237,231,217,.55);
+}
+.deco-line{
+  width:70px; height:1px;
+  background:var(--hair-strong);
+  top:-40px; right:-180px;
+}
+.deco-line-v{
+  width:1px; height:60px;
+  background:var(--hair-strong);
+  bottom:-40px; right:-180px;
+}
+@keyframes spinSlow{
+  from{ transform:rotate(0deg); }
+  to  { transform:rotate(360deg); }
+}
+
+/* ============================================================
+   RULER
+   ============================================================ */
+.ruler{
+  height:12px;
+  border-top:1px solid var(--hair);
+  border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(
+    to right,
+    var(--hair-strong) 0 1px,
+    transparent 1px 16px
+  );
+  background-position:0 3px;
+  background-repeat:repeat-x;
+  background-size:auto 6px;
+}
+
+/* ============================================================
+   WORKSPACE
+   ============================================================ */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 400px;
+  gap:56px;
+  padding:56px 0 40px;
+  align-items:start;
+}
+
+/* Flow (left) */
+.flow{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.plate{
+  display:grid;
+  grid-template-columns:56px minmax(0, 1fr);
+  gap:0;
+  position:relative;
+}
+.plate__num{
+  font-family:var(--serif);
+  font-size:2rem;
+  font-weight:400;
+  font-style:italic;
+  line-height:1;
+  color:var(--ink-45);
+  padding-top:36px;
+  position:relative;
+  transition:color .25s ease;
+}
+.plate__num::after{
+  content:"";
+  position:absolute;
+  top:74px;
+  left:8px;
+  right:18px;
+  height:1px;
+  background:var(--hair);
+}
+.plate:hover .plate__num{ color:var(--accent); }
+
+.plate__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--radius-xs);
+  padding:30px 28px 26px;
+  transition:border-color .25s ease;
+  overflow:hidden;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.05), transparent 55%),
+    var(--paper-raise);
+}
+.plate__body::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body:hover{ border-color:var(--hair-strong); }
+.plate__body:hover::before,
+.plate__body:hover::after{ border-color:var(--accent); }
+
+/* Section title */
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink);
+  margin-bottom:22px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.section-title i{
+  color:var(--accent);
+  font-size:1rem;
+}
+.section-title .title-line{
+  flex:1;
+  height:1px;
+  background:var(--hair);
+}
+
+/* File zone */
+.file-zone{
+  border:1px dashed var(--hair-strong);
+  border-radius:var(--radius-xs);
+  padding:32px 22px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .2s ease, background .2s ease;
+  position:relative;
+  overflow:hidden;
+  background:var(--paper-deep);
+}
+.file-zone:hover{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+}
+.file-zone input[type="file"]{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+.file-icon{
+  font-size:2rem;
+  color:var(--ink-45);
+  margin-bottom:12px;
+  transition:color .2s ease, transform .2s ease;
+}
+.file-zone:hover .file-icon{
+  color:var(--accent);
+  transform:translateY(-4px);
+}
+.file-text{
+  font-size:1rem;
+  font-weight:500;
+  color:var(--ink-70);
+}
+.file-text span{
+  color:var(--accent);
+  font-weight:600;
+}
+.file-hint{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin-top:8px;
+}
+
+/* Field label + select */
+.field-label{
+  display:block;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  color:var(--ink-45);
+  margin-bottom:10px;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+}
+
+.select-wrapper{ position:relative; }
+.select-wrapper::after{
+  content:"\f107";
+  font-family:"Font Awesome 6 Free";
+  font-weight:900;
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--ink-45);
+  font-size:14px;
+  pointer-events:none;
+}
+.styled-select{
+  width:100%;
+  padding:16px 44px 16px 18px;
+  border-radius:var(--radius-xs);
+  border:1px solid var(--hair);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-size:1rem;
+  font-weight:500;
+  font-family:var(--mono);
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.styled-select:hover{ border-color:var(--hair-strong); }
+.styled-select:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+.styled-select option{
+  background:var(--paper-raise);
+  color:var(--ink);
+}
+
+/* Hidden native progress bar (JS still drives it) */
+#prog{
+  position:absolute;
+  width:0; height:0;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ============================================================
+   CONSOLE (right, sticky)
+   ============================================================ */
+.console{
+  position:sticky;
+  top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.console__head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--hair-strong);
+  margin-bottom:18px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.console__head span:last-child{ color:var(--ink); }
+.console__head .live-dot{
+  display:inline-block;
+  width:7px; height:7px;
+  border-radius:1px;
+  background:var(--stamp);
+  margin-right:8px;
+  animation:pulseDot 2.2s ease-in-out infinite;
+  vertical-align:middle;
+}
+
+.console__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--radius-xs);
+  padding:26px 24px 22px;
+  overflow:hidden;
+}
+.console__body::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body:hover{ border-color:var(--hair-strong); }
+.console__body:hover::before,
+.console__body:hover::after{ border-color:var(--accent); }
+
+/* Primary button */
+.btn-primary{
+  padding:18px 28px;
+  border:1px solid transparent;
+  border-radius:var(--radius-xs);
+  background:var(--accent);
+  color:var(--paper);
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, transform .08s ease, opacity .2s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:11px;
+  width:100%;
+  position:relative;
+  overflow:hidden;
+}
+.btn-primary:hover{ background:var(--accent-lo); }
+.btn-primary:active{
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+}
+.btn-primary:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+.btn-primary i{ font-size:.9rem; }
+
+/* Progress */
+.progress-wrap{
+  margin-top:22px;
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:max-height .4s ease, opacity .3s ease;
+}
+.progress-wrap.visible{
+  max-height:140px;
+  opacity:1;
+}
+.progress-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:10px;
+}
+.progress-label{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  color:var(--ink-45);
+  text-transform:uppercase;
+  letter-spacing:.2em;
+}
+.progress-percent{
+  font-family:var(--mono);
+  font-size:1.125rem;
+  font-weight:700;
+  color:var(--accent);
+}
+.progress-track{
+  width:100%;
+  height:8px;
+  border-radius:1px;
+  background:var(--paper-deep);
+  overflow:hidden;
+  position:relative;
+  border:1px solid var(--hair);
+}
+.progress-fill{
+  height:100%;
+  background:var(--accent);
+  width:0%;
+  transition:width .3s ease;
+  position:relative;
+}
+.progress-fill::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,.35),
+    transparent);
+  animation:shimmer 1.6s infinite;
+}
+@keyframes shimmer{
+  0%  { transform:translateX(-100%); }
+  100%{ transform:translateX(100%); }
+}
+
+/* Log */
+.log-wrap{
+  margin-top:22px;
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:max-height .4s ease, opacity .3s ease;
+}
+.log-wrap.visible{
+  max-height:520px;
+  opacity:1;
+}
+.log-container{
+  background:#0F0E0D;
+  border:1px solid var(--hair);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(0,0,0,.5),
+    inset 0 -1px 0 rgba(237,231,217,.04);
+}
+.log-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 18px;
+  border-bottom:1px solid var(--hair);
+  background:var(--paper-deep);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  color:var(--ink-45);
+  text-transform:uppercase;
+  letter-spacing:.2em;
+}
+.terminal-dot{
+  width:8px; height:8px;
+  border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+#log{
+  padding:18px;
+  max-height:340px;
+  min-height:140px;
+  overflow-y:auto;
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:500;
+  line-height:1.75;
+  color:var(--accent);
+  word-break:break-all;
+  white-space:pre-wrap;
+}
+#log::-webkit-scrollbar{ width:6px; }
+#log::-webkit-scrollbar-track{ background:transparent; }
+#log::-webkit-scrollbar-thumb{
+  background:var(--hair-strong);
+  border-radius:2px;
+}
+.error{ color:var(--error); }
+.success{ color:var(--success); }
+.info{ color:var(--info); }
+
+/* ============================================================
+   COLOPHON
+   ============================================================ */
+footer{
+  margin-top:80px;
+  padding:26px 0 64px;
+  border-top:3px double var(--ink-25);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  text-align:center;
+}
+footer span{ color:var(--accent); }
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+.back-btn:focus-visible,
+.runhead__nav a:focus-visible,
+.btn-primary:focus-visible,
+.styled-select:focus-visible{
+  outline:1px solid var(--accent);
+  outline-offset:3px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .workspace{ grid-template-columns:minmax(0,1fr) 340px; gap:40px; }
+}
+
+@media (max-width:1000px){
+  .titleblock{ grid-template-columns:1fr; gap:32px; padding:44px 0 32px; }
+  .titleblock__spec{
+    border-left:0;
+    padding-left:0;
+    padding-top:22px;
+    border-top:1px solid var(--hair);
+  }
+  .deco-ring,
+  .deco-ring-inner,
+  .deco-dots,
+  .deco-line,
+  .deco-line-v{ display:none; }
+  .workspace{
+    grid-template-columns:1fr;
+    gap:32px;
+    padding:36px 0 24px;
+  }
+  .console{ position:static; }
+}
+
+@media (max-width:700px){
+  body{ font-size:16px; }
+  .sheet{ padding:0 18px; }
+  .runhead__top{ gap:12px; }
+  .runhead__nav a{ font-size:.6875rem; padding:9px 12px 8px; }
+  .back-btn{ font-size:.6875rem; padding:9px 14px 8px; }
+  .runhead__folios{ font-size:.6875rem; }
+
+  .titleblock h1{ font-size:clamp(2.25rem, 8vw, 3.25rem); }
+  .deck, .sub{ font-size:1rem; }
+
+  .plate{ grid-template-columns:1fr; }
+  .plate__num{
+    font-size:1.5rem;
+    padding-top:0;
+    padding-bottom:8px;
+  }
+  .plate__num::after{ display:none; }
+
+  .plate__body{ padding:24px 18px 22px; }
+  .console__body{ padding:22px 18px 20px; }
+
+  .orb{ display:none; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+}
 </style>
 </head>
 
 <body>
 
+<div class="top-accent"></div>
+<div class="orb orb-1-fix" aria-hidden="true"></div>
+<div class="orb orb-2-fix" aria-hidden="true"></div>
+
 <div class="content-wrapper">
-  <div class="orb orb-1-fix"></div>
-  <div class="orb orb-2-fix"></div>
+  <div class="sheet">
+    <div class="sheet__inner">
 
-  <div class="page-top">
-    <a class="back-btn" href="index.html"><i class="fas fa-arrow-left"></i> Back</a>
-    <nav class="mini-nav">
-      <a href="convert.html"><i class="fas fa-sliders-h"></i>EQ Studio</a>
-      <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
-      <a href="vidcom.html" class="active"><i class="fas fa-film"></i>Compressor</a>
-      <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
-    </nav>
-  </div>
+      <!-- ── RUNNING HEAD ──────────────────────────────────────── -->
+      <header class="runhead">
+        <div class="runhead__top">
+          <a class="back-btn" href="index.html"><i class="fas fa-arrow-left"></i> Back</a>
 
-  <section class="page-hero">
-    <h1>Video <span class="grad">Compressor</span></h1>
-    <h4>TPG Service v3</h4>
-    <p class="sub">Smart compression with HDR detection and hardware acceleration.</p>
-  </section>
-
-  <div class="tool-content">
-    <div class="glass-card">
-      <div class="section-title">
-        <i class="fas fa-compress-arrows-alt"></i>
-        Compress
-        <span class="title-line"></span>
-      </div>
-
-      <div class="file-zone" id="fileZone">
-        <input type="file" id="videoFile" accept="video/*">
-        <div class="file-icon"><i class="fas fa-film"></i></div>
-        <div class="file-text">Drop a <span>video file</span> here</div>
-        <div class="file-hint">Supports all common video formats</div>
-      </div>
-
-      <label class="field-label">Quality Target (CRF — lower = better quality)</label>
-      <div class="select-wrapper">
-        <select id="crf" class="styled-select">
-          <option value="32">Low — smallest file</option>
-          <option value="28" selected>Medium — recommended</option>
-          <option value="24">High — better quality</option>
-          <option value="21">Very High</option>
-          <option value="18">Best / Lossless</option>
-        </select>
-      </div>
-
-      <button id="btn" class="btn-primary" disabled>
-        <i class="fas fa-compress-arrows-alt"></i>
-        Compress Video
-      </button>
-
-      <progress id="prog" value="0" max="100"></progress>
-
-      <div class="progress-wrap">
-        <div class="progress-header">
-          <span class="progress-label">Processing</span>
-          <span class="progress-percent" id="progressPercent">0%</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-      </div>
-
-      <div class="log-wrap">
-        <div class="log-container">
-          <div class="log-header">
-            <span class="terminal-dot"></span>
-            Output
+          <div class="runhead__folios">
+            <span class="runhead__folio"><strong>Plate 03</strong> · Video Compressor</span>
+            <span class="runhead__folio">TPG Service v4</span>
           </div>
-          <div id="log">Ready. Choose a video file…</div>
+
+          <nav class="runhead__nav">
+  <a href="downloader.html"><i class="fas fa-download"></i>Video Downloader</a>
+  <a href="pdf.html"><i class="fas fa-code"></i>HTML to PDF</a>
+  <a href="vidcom.html" class="active"><i class="fas fa-film"></i>Video Compressor</a>
+  <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+  <a href="convert.html"><i class="fas fa-sync-alt"></i>Marshell-EQ</a>
+  <a href="ig.html"><i class="fa fa-image"></i>IG-Image</a>
+</nav>
         </div>
+      </header>
+
+      <!-- ── TITLE BLOCK ───────────────────────────────────────── -->
+      <section class="titleblock">
+        <div class="deco deco-ring" aria-hidden="true"></div>
+        <div class="deco deco-ring-inner" aria-hidden="true"></div>
+        <div class="deco deco-line" aria-hidden="true"></div>
+        <div class="deco deco-line-v" aria-hidden="true"></div>
+        <div class="deco deco-dots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="titleblock__main">
+          <div class="titleblock__meta">
+            <div class="page-badge"><span class="pulse-dot"></span> Video Processor</div>
+            <h4>TPG Service v3</h4>
+          </div>
+          <h1>Video <em>Compressor</em></h1>
+          <p class="deck">Smart compression with HDR detection and hardware acceleration.</p>
+        </div>
+
+        <aside class="titleblock__spec" aria-hidden="true">
+          <div class="spec">
+            <div class="spec__row"><span>Codec</span><span>H.264 / H.265</span></div>
+            <div class="spec__row"><span>Control</span><span>CRF</span></div>
+            <div class="spec__row"><span>Range</span><span>18 – 32</span></div>
+            <div class="spec__row"><span>HDR</span><span>Detected</span></div>
+          </div>
+          <div class="spec__dimension">
+            <span class="spec__dimension-line"></span>
+            <span>Hardware accelerated</span>
+            <span class="spec__dimension-line"></span>
+          </div>
+        </aside>
+      </section>
+
+      <!-- ── RULER ─────────────────────────────────────────────── -->
+      <div class="ruler" aria-hidden="true"></div>
+
+      <!-- ── WORKSPACE ─────────────────────────────────────────── -->
+      <div class="workspace">
+
+        <!-- LEFT: flow (numbered plates) -->
+        <div class="flow">
+
+          <div class="plate">
+            <div class="plate__num">01</div>
+            <section class="plate__body">
+              <div class="section-title">
+                <i class="fas fa-film"></i> Source Video <span class="title-line"></span>
+              </div>
+
+              <div class="file-zone" id="fileZone">
+                <input type="file" id="videoFile" accept="video/*">
+                <div class="file-icon"><i class="fas fa-film"></i></div>
+                <div class="file-text">Drop a <span>video file</span> here</div>
+                <div class="file-hint">Supports all common video formats</div>
+              </div>
+            </section>
+          </div>
+
+          <div class="plate">
+            <div class="plate__num">02</div>
+            <section class="plate__body">
+              <div class="section-title">
+                <i class="fas fa-compress-arrows-alt"></i> Quality Target <span class="title-line"></span>
+              </div>
+
+              <label class="field-label" for="crf">CRF — Lower means better quality</label>
+              <div class="select-wrapper">
+                <select id="crf" class="styled-select">
+                  <option value="32">Low — smallest file</option>
+                  <option value="28" selected>Medium — recommended</option>
+                  <option value="24">High — better quality</option>
+                  <option value="21">Very High</option>
+                  <option value="18">Best / Lossless</option>
+                </select>
+              </div>
+            </section>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: sticky console -->
+        <aside class="console">
+          <div class="console__head">
+            <span><span class="live-dot"></span>Console</span>
+            <span>Live output</span>
+          </div>
+
+          <div class="console__body">
+            <button id="btn" class="btn-primary" disabled>
+              <i class="fas fa-compress-arrows-alt"></i>
+              Compress Video
+            </button>
+
+            <progress id="prog" value="0" max="100"></progress>
+
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-header">
+                <span class="progress-label">Processing</span>
+                <span class="progress-percent" id="progressPercent">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+
+            <div class="log-wrap" id="logWrap">
+              <div class="log-container">
+                <div class="log-header">
+                  <span class="terminal-dot"></span>
+                  Output
+                </div>
+                <div id="log">Ready. Choose a video file…</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
       </div>
+
+      <!-- ── COLOPHON ──────────────────────────────────────────── -->
+      <footer>
+        &copy; 2026 <span>TPG Service</span>. All rights reserved.
+      </footer>
+
     </div>
   </div>
-
-  <footer>
-    &copy; 2026 <span>TPG Service</span>. All rights reserved.
-  </footer>
 </div>
 
 <script>
@@ -165,7 +1192,7 @@ fileEl.addEventListener('change', function() {
     fileZone.querySelector('.file-text').innerHTML = 'Loaded: <span>' + name + '</span>';
     fileZone.querySelector('.file-hint').textContent = (fileEl.files[0].size/1048576).toFixed(1) + ' MB — ready';
     fileZone.style.borderColor = 'var(--accent)';
-    fileZone.style.background = 'rgba(0,223,162,0.03)';
+    fileZone.style.background = 'rgba(212,201,168,0.04)';
   }
 });
 

@@ -5,115 +5,986 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TPG Service</title>
     <link rel="icon" href="favicon_1.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+/* ============================================================
+   TPG SERVICE · DARK PENCIL · MAIN PAGE
+   Graphite paper, cream ink. Same structure, recoloured.
+   Every JS hook preserved.
+   ============================================================ */
+
+:root{
+  /* paper = charcoal graphite */
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
+
+  /* ink = warm cream showing through graphite */
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
+
+  /* hairlines = pencil strokes */
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
+
+  /* accent = warm pencil-light */
+  --ink-green:    #D4C9A8;
+  --ink-green-lo: #C4B894;
+  --accent:       #D4C9A8;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+
+  --radius:       2px;
+  --radius-sm:    2px;
+  --radius-xs:    2px;
+
+  --max:          1280px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Graphite grain — screen blend so it lightens the charcoal */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:.14;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+  mix-blend-mode:screen;
+}
+
+/* Dark vignette — edges fall into shadow */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+/* Canvas — graphite dust on dark paper */
+#bgCanvas{
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  z-index:0;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  filter:grayscale(1) contrast(1.4);
+  opacity:.35;
+}
+
+/* Orbs — halftone blooms, warm pencil tone */
+.orb{
+  position:fixed;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+  opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1{ width:460px; height:460px; top:-160px; right:-120px; }
+.orb-2{ width:340px; height:340px; top:520px; left:-120px; }
+.orb-3{ width:260px; height:260px; bottom:80px; right:4%; }
+
+/* ============================================================
+   SHEET WRAPPER
+   ============================================================ */
+.sheet{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+  padding:0 40px;
+}
+.sheet__inner{
+  max-width:var(--max);
+  margin:0 auto;
+  position:relative;
+}
+/* Side rail of ticks */
+.sheet__inner::before{
+  content:"";
+  position:absolute;
+  top:0; bottom:0;
+  left:-22px;
+  width:10px;
+  background-image:repeating-linear-gradient(
+    to bottom,
+    var(--hair) 0 1px,
+    transparent 1px 12px
+  );
+  opacity:.75;
+  pointer-events:none;
+}
+
+/* ============================================================
+   MASTHEAD
+   ============================================================ */
+.masthead{ padding-top:26px; }
+.masthead__rule{
+  height:1px;
+  background:var(--ink);
+  opacity:.55;
+}
+.masthead__rule--thick{
+  height:3px;
+  border-top:1px solid var(--ink);
+  border-bottom:1px solid var(--ink);
+  background:transparent;
+  margin-top:5px;
+  opacity:.55;
+}
+.masthead__inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:12px 0 10px;
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-70);
+  flex-wrap:wrap;
+}
+.masthead__imprint{ color:var(--ink); font-weight:600; }
+.masthead__folio{ color:var(--ink-45); }
+
+/* ============================================================
+   HERO — title block
+   ============================================================ */
+.hero{
+  padding:96px 0 72px;
+  position:relative;
+}
+.hero__grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 260px;
+  gap:80px;
+  align-items:end;
+}
+.hero__meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:34px;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 16px 7px 14px;
+  border:1px solid var(--hair-strong);
+  border-radius:var(--radius-xs);
+  background:var(--paper-raise);
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink-70);
+}
+.pulse-dot{
+  width:8px; height:8px;
+  background:var(--stamp);
+  border-radius:1px;
+  flex:none;
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+
+.hero h1{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:clamp(2.75rem, 7.2vw, 6.25rem);
+  line-height:.94;
+  letter-spacing:-.025em;
+  margin:0 0 30px;
+  color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.16),
+    -1px 0 0 rgba(212,201,168,.16);
+}
+.hero h1 em{
+  font-style:italic;
+  color:var(--accent);
+}
+
+.hero__deck{
+  font-size:1.0625rem;
+  font-weight:500;
+  line-height:1.72;
+  color:var(--ink-70);
+  max-width:52ch;
+  margin:0;
+}
+
+.hero__aside{
+  padding-bottom:6px;
+  border-left:1px solid var(--hair);
+  padding-left:26px;
+}
+.spec{
+  display:grid;
+  gap:0;
+  margin-bottom:26px;
+}
+.spec__row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding:9px 0;
+  border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+
+.spec__dimension{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:.625rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1;
+  height:1px;
+  background:var(--hair-strong);
+  position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:"";
+  position:absolute;
+  top:-3px;
+  width:1px;
+  height:7px;
+  background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* ============================================================
+   RULER STRIP
+   ============================================================ */
+.ruler{
+  height:12px;
+  border-top:1px solid var(--hair);
+  border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(
+    to right,
+    var(--hair-strong) 0 1px,
+    transparent 1px 16px
+  );
+  background-position:0 3px;
+  background-repeat:repeat-x;
+  background-size:auto 6px;
+}
+
+/* ============================================================
+   WORKBENCH — index + plates
+   ============================================================ */
+.workbench{
+  display:grid;
+  grid-template-columns:300px minmax(0, 1fr);
+  gap:80px;
+  padding:72px 0 40px;
+  align-items:start;
+}
+
+/* ------------------- INDEX ------------------- */
+.index__head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:16px;
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+.index__list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  border-top:1px solid var(--hair);
+  position:sticky;
+  top:24px;
+}
+
+.tab{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 0 16px 22px;
+  border-bottom:1px solid var(--hair);
+  cursor:pointer;
+  user-select:none;
+  transition:background .2s ease, padding-left .25s ease;
+}
+.tab::before{
+  content:"";
+  position:absolute;
+  left:2px;
+  top:50%;
+  width:6px; height:6px;
+  border-radius:50%;
+  background:transparent;
+  transform:translateY(-50%);
+  transition:background .2s ease, transform .25s ease;
+}
+.tab:hover{ background:rgba(237,231,217,.03); }
+.tab:hover::before{ background:var(--ink-25); }
+
+.tab__no{
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  color:var(--ink-45);
+  min-width:22px;
+}
+.tab__label{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-70);
+  transition:color .2s ease;
+}
+.tab__label i{
+  font-size:.8125rem;
+  opacity:.7;
+  transition:opacity .2s ease;
+}
+.tab__leader{
+  flex:1;
+  border-bottom:1px dotted var(--ink-15);
+  height:0;
+  margin-top:5px;
+}
+
+.tab.active{ padding-left:26px; }
+.tab.active::before{
+  background:var(--accent);
+  transform:translateY(-50%) scale(1.25);
+}
+.tab.active .tab__no{ color:var(--accent); }
+.tab.active .tab__label{ color:var(--accent); }
+.tab.active .tab__label i{ opacity:1; }
+
+/* ------------------- PLATES ------------------- */
+.plates{
+  position:relative;
+  min-height:420px;
+}
+.plates__head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:20px;
+  padding-bottom:14px;
+  margin-bottom:32px;
+  border-bottom:1px solid var(--hair-strong);
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.plates__head span:last-child{ color:var(--ink); }
+
+.tab-content{ display:none; }
+.tab-content.active{
+  display:block;
+  animation:plateIn .5s cubic-bezier(.2,.75,.2,1);
+}
+@keyframes plateIn{
+  from{ opacity:0; transform:translateY(14px); }
+  to  { opacity:1; transform:none; }
+}
+
+/* ------------------- CARD — a specimen plate ------------------- */
+.glass-card{
+  position:relative;
+  padding:44px 46px 40px;
+  border:1px solid var(--hair);
+  border-radius:var(--radius);
+  cursor:pointer;
+  overflow:hidden;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.06), transparent 60%),
+    var(--paper-raise);
+  box-shadow:0 1px 0 rgba(0,0,0,.35);
+  transition:border-color .25s ease, transform .3s ease;
+  max-width:720px;
+}
+
+.glass-card::before,
+.glass-card::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  transition:border-color .25s ease;
+}
+.glass-card::before{
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+}
+.glass-card::after{
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+}
+.glass-card:hover{
+  border-color:var(--hair-strong);
+  transform:translateY(-4px);
+}
+.glass-card:hover::before,
+.glass-card:hover::after{ border-color:var(--accent); }
+
+.plate-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:20px;
+  padding-bottom:14px;
+  margin-bottom:34px;
+  border-bottom:1px dotted var(--ink-25);
+  font-family:var(--mono);
+  font-size:.625rem;
+  font-weight:600;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.plate-head .plate-no{ color:var(--accent); }
+
+.card-icon{
+  width:56px; height:56px;
+  display:grid;
+  place-items:center;
+  margin-bottom:30px;
+  border:1px solid var(--hair-strong);
+  border-radius:var(--radius-xs);
+  background:var(--paper-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(0,0,0,.5),
+    inset 0 -1px 0 rgba(237,231,217,.04);
+  color:var(--accent);
+  font-size:1.1875rem;
+  transition:background .25s ease, color .25s ease, border-color .25s ease;
+}
+.glass-card:hover .card-icon{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--paper);
+}
+
+.glass-card h3{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:2rem;
+  line-height:1.1;
+  letter-spacing:-.015em;
+  margin:0 0 14px;
+  color:var(--ink);
+}
+.glass-card p{
+  margin:0 0 32px;
+  max-width:46ch;
+  font-size:.9375rem;
+  font-weight:500;
+  color:var(--ink-70);
+}
+
+.card-arrow{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding-top:16px;
+  border-top:1px solid var(--hair);
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  width:100%;
+  justify-content:space-between;
+  transition:color .2s ease;
+}
+.card-arrow i{ transition:transform .3s ease; }
+.glass-card:hover .card-arrow{ color:var(--accent); }
+.glass-card:hover .card-arrow i{ transform:translateX(4px); }
+
+/* ------------------- PLACEHOLDER ------------------- */
+.placeholder-card{
+  max-width:720px;
+  padding:88px 32px;
+  border:1px dashed var(--hair-strong);
+  border-radius:var(--radius);
+  text-align:center;
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  line-height:2.2;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.placeholder-card i{
+  display:block;
+  margin-bottom:22px;
+  font-size:1.5rem;
+  color:var(--accent);
+  opacity:.75;
+}
+
+/* ============================================================
+   COLOPHON
+   ============================================================ */
+.colophon{
+  margin-top:96px;
+  padding:26px 0 72px;
+  border-top:3px double var(--ink-25);
+}
+.colophon__inner{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:24px;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+  font-size:.6875rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.colophon__inner span:first-child{ color:var(--ink); }
+.colophon__inner span:last-child{ color:var(--accent); }
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+.tab:focus-visible,
+.glass-card:focus-visible,
+.placeholder-card:focus-visible{
+  outline:1px solid var(--accent);
+  outline-offset:3px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1080px){
+  .workbench{ gap:56px; grid-template-columns:260px minmax(0,1fr); }
+}
+
+@media (max-width:900px){
+  .hero__grid{ grid-template-columns:1fr; gap:44px; }
+  .hero__aside{
+    border-left:0;
+    padding-left:0;
+    padding-top:24px;
+    border-top:1px solid var(--hair);
+  }
+  .workbench{ grid-template-columns:1fr; gap:48px; padding:56px 0 32px; }
+  .index__list{ position:static; }
+  .glass-card{ padding:36px 30px 32px; }
+  .glass-card h3{ font-size:1.75rem; }
+}
+
+@media (max-width:640px){
+  .sheet{ padding:0 20px; }
+  .sheet__inner::before{ display:none; }
+  .hero{ padding:64px 0 48px; }
+  .hero h1{ font-size:clamp(2.25rem, 9.5vw, 3.5rem); }
+  .masthead__inner{ font-size:.5625rem; letter-spacing:.16em; }
+  .masthead__imprint{ display:none; }
+  .tab{ padding-left:20px; }
+  .tab.active{ padding-left:24px; }
+  .tab__label{ font-size:.6875rem; letter-spacing:.1em; }
+  .glass-card{ padding:28px 22px 26px; }
+  .plate-head{ margin-bottom:26px; }
+  .orb{ display:none; }
+  .colophon__inner{ font-size:.5625rem; letter-spacing:.14em; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+}
+</style>
 </head>
 <body>
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
-<div class="content-wrapper">
-    <!-- Atmospheric orbs -->
+<div class="sheet">
+  <div class="sheet__inner">
+
+    <!-- Atmospheric orbs (kept for JS parallax) -->
     <div class="orb orb-1" aria-hidden="true"></div>
     <div class="orb orb-2" aria-hidden="true"></div>
     <div class="orb orb-3" aria-hidden="true"></div>
 
-    <!-- Hero Section -->
+    <!-- ── MASTHEAD ─────────────────────────────────────────── -->
+    <header class="masthead">
+      <div class="masthead__rule"></div>
+      <div class="masthead__inner">
+        <span class="masthead__folio">Fol. 01</span>
+        <span class="masthead__imprint">TPG Service · Press Sheet No. 4</span>
+        <span class="masthead__folio">MMXXVI</span>
+      </div>
+      <div class="masthead__rule--thick"></div>
+    </header>
+
+    <!-- ── HERO ─────────────────────────────────────────────── -->
     <section class="hero">
-        <!-- Decorative organic shapes -->
-        <div class="deco deco-ring" aria-hidden="true"></div>
-        <div class="deco deco-ring-inner" aria-hidden="true"></div>
-        <div class="deco deco-line" aria-hidden="true"></div>
-        <div class="deco deco-line-v" aria-hidden="true"></div>
-        <div class="deco deco-dots" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
+      <div class="hero__grid">
+        <div class="hero__main">
+          <div class="hero__meta">
+            <span class="badge">
+              <span class="pulse-dot"></span>
+              Version 4 — Live
+            </span>
+          </div>
+          <h1>Your All-in-One<br><em>Media Toolkit</em></h1>
+          <p class="hero__deck">Download videos, convert audio, compress files — everything you need, right here. Fast, clean, and built to just work.</p>
         </div>
 
-        <div>
-            <div class="hero-badge">
-                <span class="pulse-dot"></span>
-                Version 3.3.4 — Live
-            </div>
-            <h1>Your All-in-One<br><span class="grad">Media Toolkit</span></h1>
-            <p class="sub">Download videos, convert audio, compress files — everything you need, right here. Fast, clean, and built to just work.</p>
-        </div>
+        <aside class="hero__aside" aria-hidden="true">
+          <div class="spec">
+            <div class="spec__row"><span>Format</span><span>Digital</span></div>
+            <div class="spec__row"><span>Edition</span><span>Third</span></div>
+            <div class="spec__row"><span>Plates</span><span>Six</span></div>
+            <div class="spec__row"><span>Live</span><span>Five</span></div>
+          </div>
+          <div class="spec__dimension">
+            <span class="spec__dimension-line"></span>
+            <span>1180 × 640</span>
+            <span class="spec__dimension-line"></span>
+          </div>
+        </aside>
+      </div>
     </section>
 
-    <!-- Tab Navigation -->
-    <nav class="tabs-section" aria-label="Service navigation">
-        <div class="tabs" role="tablist">
-            <div class="tab active" data-tab="tab1" role="tab" aria-selected="true" tabindex="0"><i class="fas fa-download"></i>Video Downloader</div>
-            <div class="tab" data-tab="tab2" role="tab" aria-selected="false" tabindex="0"><i class="fas fa-music"></i>Convert to MP3</div>
-            <div class="tab" data-tab="tab5" role="tab" aria-selected="false" tabindex="0"><i class="fas fa-compress-arrows-alt"></i>Compresser</div>
-            <div class="tab" data-tab="tab3" role="tab" aria-selected="false" tabindex="0"><i class="fa fa-image"></i>Base64</div>
-            <div class="tab" data-tab="tab4" role="tab" aria-selected="false" tabindex="0"><i class="fas fa-flask"></i>Coming Soon</div>
-            <div class="tab" data-tab="tab6" role="tab" aria-selected="false" tabindex="0"><i class="fas fa-sync-alt"></i>Update</div>
-        </div>
-    </nav>
+    <!-- ── RULER ────────────────────────────────────────────── -->
+    <div class="ruler" aria-hidden="true"></div>
 
-    <!-- Tab Panels -->
-    <div class="tab-panels">
+    <!-- ── WORKBENCH ────────────────────────────────────────── -->
+    <div class="workbench">
+
+      <!-- Vertical index (the tabs) -->
+      <nav class="index" aria-label="Service navigation">
+        <div class="index__head">
+          <span>§ Contents</span>
+          <span>Six entries</span>
+        </div>
+
+        <ol class="index__list" role="tablist">
+  <li class="tab active" data-tab="tab1" role="tab" aria-selected="true" tabindex="0">
+    <span class="tab__no">01</span>
+    <span class="tab__label"><i class="fas fa-download"></i>Video Downloader</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+  <li class="tab" data-tab="tab2" role="tab" aria-selected="false" tabindex="0">
+    <span class="tab__no">02</span>
+    <span class="tab__label"><i class="fas fa-code"></i>HTML to PDF</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+  <li class="tab" data-tab="tab3" role="tab" aria-selected="false" tabindex="0">
+    <span class="tab__no">03</span>
+    <span class="tab__label"><i class="fas fa-film"></i>Video Compressor</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+  <li class="tab" data-tab="tab4" role="tab" aria-selected="false" tabindex="0">
+    <span class="tab__no">04</span>
+    <span class="tab__label"><i class="fa fa-image"></i>Base64</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+  <li class="tab" data-tab="tab5" role="tab" aria-selected="false" tabindex="0">
+    <span class="tab__no">05</span>
+    <span class="tab__label"><i class="fas fa-sync-alt"></i>Marshell-EQ</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+  <li class="tab" data-tab="tab6" role="tab" aria-selected="false" tabindex="0">
+    <span class="tab__no">06</span>
+    <span class="tab__label"><i class="fa fa-image"></i>IG-Image</span>
+    <span class="tab__leader" aria-hidden="true"></span>
+  </li>
+</ol>
+      </nav>
+
+      <!-- Plates (tab panels) -->
+      <main class="plates">
+        <div class="plates__head">
+          <span>§ Specimen</span>
+          <span>Selected plate</span>
+        </div>
 
         <div class="tab-content active" id="tab1" role="tabpanel">
-            <div class="glass-card" onclick="window.location.href='downloader.html'" tabindex="0" aria-label="Open Video Downloader">
-                <div class="card-icon download"><i class="fas fa-download"></i></div>
-                <h3>Video Downloader</h3>
-                <p>Download videos and audio from multiple sources. Quick, reliable, and dead simple.</p>
-                <div class="card-arrow">Open tool <i class="fas fa-arrow-right"></i></div>
+
+          <article class="glass-card" onclick="window.location.href='downloader.html'" tabindex="0" aria-label="Open Video Downloader">
+
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 01</span>
+
+              <span>Tool · I</span>
+
             </div>
+
+            <div class="card-icon download"><i class="fas fa-download"></i></div>
+
+            <h3>Video Downloader</h3>
+
+            <p></p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
         </div>
 
         <div class="tab-content" id="tab2" role="tabpanel">
-            <div class="glass-card" onclick="window.location.href='convert.html'" tabindex="0" aria-label="Open MP3 Converter">
-                <div class="card-icon convert"><i class="fas fa-music"></i></div>
-                <h3>Convert to MP3</h3>
-                <p>Extract audio from your files and enhance with EQ — clean output every time.</p>
-                <div class="card-arrow">Open tool <i class="fas fa-arrow-right"></i></div>
-            </div>
-        </div>
 
-        <div class="tab-content" id="tab5" role="tabpanel">
-            <div class="glass-card" onclick="window.location.href='vidcom.html'" tabindex="0" aria-label="Open Video Compresser">
-                <div class="card-icon compress"><i class="fas fa-compress-arrows-alt"></i></div>
-                <h3>Video Compresser</h3>
-                <p>Smart compression that keeps quality high and file size low. No compromises.</p>
-                <div class="card-arrow">Open tool <i class="fas fa-arrow-right"></i></div>
-            </div>
-        </div>
+          <article class="glass-card" onclick="window.location.href='pdf.html'" tabindex="0" aria-label="Open HTML to PDF">
 
-        <div class="tab-content" id="tab6" role="tabpanel">
-            <div class="glass-card" onclick="window.location.href='update.html'" tabindex="0" aria-label="Open System Update">
-                <div class="card-icon update"><i class="fas fa-sync-alt"></i></div>
-                <h3>System Update</h3>
-                <p>Keep TPG Service running the latest version with a single click.</p>
-                <div class="card-arrow">Check updates <i class="fas fa-arrow-right"></i></div>
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 02</span>
+
+              <span>Tool · II</span>
+
             </div>
+
+            <div class="card-icon download"><i class="fas fa-code"></i></div>
+
+            <h3>HTML to PDF</h3>
+
+            <p>Convert HTML file or code to PDF file. Uses a advance method to break pages properly.</p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
         </div>
 
         <div class="tab-content" id="tab3" role="tabpanel">
-            <div class="glass-card" onclick="window.location.href='base64.html'" tabindex="0" aria-label="Base64 Converter">
-                <div class="card-icon compress"><i class="fa fa-image"></i></div>
-                <h3>Base64 Converter</h3>
-                <p>Convert images to Base64.</p>
-                <div class="card-arrow">Open tool <i class="fas fa-arrow-right"></i></div>
+
+          <article class="glass-card" onclick="window.location.href='vidcom.html'" tabindex="0" aria-label="Open Video Compressor">
+
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 03</span>
+
+              <span>Tool · III</span>
+
             </div>
+
+            <div class="card-icon download"><i class="fas fa-film"></i></div>
+
+            <h3>Video Compressor</h3>
+
+            <p></p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
         </div>
 
         <div class="tab-content" id="tab4" role="tabpanel">
-            <div class="placeholder-card">
-                <i class="fas fa-flask"></i>
-                Experiment in progress.<br>Stay tuned.
+
+          <article class="glass-card" onclick="window.location.href='base64.html'" tabindex="0" aria-label="Open Base64">
+
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 04</span>
+
+              <span>Tool · IV</span>
+
             </div>
+
+            <div class="card-icon download"><i class="fa fa-image"></i></div>
+
+            <h3>Base64</h3>
+
+            <p></p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
         </div>
 
+        <div class="tab-content" id="tab5" role="tabpanel">
+
+          <article class="glass-card" onclick="window.location.href='convert.html'" tabindex="0" aria-label="Open Marshell-EQ">
+
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 05</span>
+
+              <span>Tool · V</span>
+
+            </div>
+
+            <div class="card-icon download"><i class="fas fa-sync-alt"></i></div>
+
+            <h3>Marshell-EQ</h3>
+
+            <p></p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
+        </div>
+
+        <div class="tab-content" id="tab6" role="tabpanel">
+
+          <article class="glass-card" onclick="window.location.href='ig.html'" tabindex="0" aria-label="Open IG-Image">
+
+            <div class="plate-head">
+
+              <span class="plate-no">Plate 06</span>
+
+              <span>Tool · VI</span>
+
+            </div>
+
+            <div class="card-icon download"><i class="fa fa-image"></i></div>
+
+            <h3>IG-Image</h3>
+
+            <p>Use to convert normal images to Instagram ready images.</p>
+
+            <div class="card-arrow">
+
+              <span>Open tool</span>
+
+              <i class="fas fa-arrow-right"></i>
+
+            </div>
+
+          </article>
+
+        </div>
+      </main>
     </div>
 
-    <footer>
-        &copy; 2026 <span>TPG Service</span>. All rights reserved.
+    <!-- ── COLOPHON ─────────────────────────────────────────── -->
+    <footer class="colophon">
+      <div class="colophon__inner">
+        <span>© 2026 TPG Service</span>
+        <span>Set in Instrument Serif · Inter · JetBrains Mono</span>
+        <span>All rights reserved</span>
+      </div>
     </footer>
+
+  </div>
 </div>
 
 <script>

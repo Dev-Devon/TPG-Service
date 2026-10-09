@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IG-Image | TPG Tools</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+/* ============================================================
+   TPG · DARK PENCIL · IG-IMAGE · BATCH
+   ============================================================ */
+
+:root{
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
+
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
+
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
+
+  --accent:       #D4C9A8;
+  --accent-lo:    #C4B894;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+  --error:        #E08770;
+  --warning:      #C99A5A;
+  --info:         #A8B29E;
+
+  --r:            2px;
+  --max:          1360px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+html { -webkit-text-size-adjust:100%; }
+
+body{
+  font-family:var(--sans);
+  font-size:17px;
+  font-weight:500;
+  line-height:1.7;
+  color:var(--ink);
+  background:var(--paper);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; opacity:.14; pointer-events:none;
+  mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+}
+body::after{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+.orb{
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0; opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1{ top:-120px; right:-120px; width:460px; height:460px; }
+.orb-2{ bottom:-120px; left:-120px; width:380px; height:380px; }
+.orb-3{ top:45%; right:4%; width:260px; height:260px; }
+
+/* ── SHEET ── */
+.sheet{ position:relative; z-index:1; width:100%; padding:0 40px; }
+.sheet__inner{ max-width:var(--max); margin:0 auto; position:relative; }
+
+/* ── RUNHEAD ── */
+.runhead{ padding-top:24px; border-bottom:1px solid var(--hair); }
+.runhead__top{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:20px; padding-bottom:14px; flex-wrap:wrap;
+}
+.runhead__folios{
+  display:flex; align-items:center; gap:20px;
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.runhead__folio strong{ color:var(--ink); font-weight:600; }
+.runhead__nav{
+  display:flex; gap:0; border:1px solid var(--hair); border-radius:var(--r);
+  background:var(--paper-raise); overflow:hidden; flex-wrap:wrap;
+}
+.runhead__nav a{
+  padding:10px 16px 9px;
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-45); text-decoration:none;
+  border-right:1px solid var(--hair);
+  transition:background .2s ease, color .2s ease; white-space:nowrap;
+}
+.runhead__nav a:last-child{ border-right:0; }
+.runhead__nav a:hover{ color:var(--ink); background:var(--paper-deep); }
+.runhead__nav a.active{ color:var(--paper); background:var(--accent); }
+.runhead__nav a i{ margin-right:7px; font-size:.8rem; }
+
+.back-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 18px 9px;
+  border-radius:var(--r); border:1px solid var(--hair-strong);
+  background:var(--paper-raise); color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  text-decoration:none; cursor:pointer;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.back-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--paper-deep); }
+.back-btn i{ font-size:.8rem; transition:transform .25s ease; }
+.back-btn:hover i{ transform:translateX(-3px); }
+
+/* ── TITLE BLOCK ── */
+.titleblock{
+  padding:72px 0 44px;
+  display:grid; grid-template-columns:minmax(0,1fr) 300px;
+  gap:64px; align-items:end;
+}
+.titleblock__meta{
+  display:flex; align-items:center; gap:16px;
+  margin-bottom:26px; flex-wrap:wrap;
+}
+.page-badge{
+  display:inline-flex; align-items:center; gap:11px;
+  padding:8px 16px 7px 14px;
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  border:1px solid var(--hair-strong);
+  color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.page-badge .pulse-dot{
+  width:8px; height:8px; border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+.version{
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.titleblock h1{
+  font-family:var(--serif); font-weight:400;
+  font-size:clamp(2.75rem, 6.4vw, 5rem);
+  line-height:.96; letter-spacing:-.024em;
+  margin-bottom:18px; color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.14),
+    -1px 0 0 rgba(212,201,168,.14);
+}
+.titleblock h1 em{ font-style:italic; color:var(--accent); }
+.deck{ font-size:1.0625rem; font-weight:500; color:var(--ink-70); max-width:52ch; line-height:1.75; }
+
+.titleblock__spec{
+  border-left:1px solid var(--hair);
+  padding-left:26px; padding-bottom:6px;
+}
+.spec{ display:grid; gap:0; margin-bottom:22px; }
+.spec__row{
+  display:flex; align-items:baseline; justify-content:space-between; gap:14px;
+  padding:10px 0; border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+.spec__dimension{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:.625rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1; height:1px; background:var(--hair-strong); position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:""; position:absolute; top:-3px;
+  width:1px; height:7px; background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* ── RULER ── */
+.ruler{
+  height:12px; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(to right, var(--hair-strong) 0 1px, transparent 1px 16px);
+  background-position:0 3px; background-repeat:repeat-x; background-size:auto 6px;
+}
+
+/* ── WORKSPACE ── */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 380px;
+  gap:56px; padding:56px 0 40px;
+  align-items:start;
+}
+
+.flow{ display:flex; flex-direction:column; gap:20px; }
+
+.plate{
+  display:grid; grid-template-columns:56px minmax(0, 1fr);
+  gap:0; position:relative;
+}
+.plate__num{
+  font-family:var(--serif);
+  font-size:2rem; font-weight:400; font-style:italic; line-height:1;
+  color:var(--ink-45); padding-top:36px; position:relative;
+  transition:color .25s ease;
+}
+.plate__num::after{
+  content:""; position:absolute; top:74px; left:8px; right:18px;
+  height:1px; background:var(--hair);
+}
+.plate:hover .plate__num{ color:var(--accent); }
+
+.plate__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:30px 28px 28px;
+  overflow:hidden;
+  transition:border-color .25s ease;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.05), transparent 55%),
+    var(--paper-raise);
+}
+.plate__body::before{
+  content:""; position:absolute; width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body::after{
+  content:""; position:absolute; width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body:hover{ border-color:var(--hair-strong); }
+.plate__body:hover::before,
+.plate__body:hover::after{ border-color:var(--accent); }
+
+.section-title{
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--mono); font-size:.8125rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink);
+  margin-bottom:22px; padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.section-title i{ color:var(--accent); font-size:1rem; }
+.section-title .title-line{ flex:1; height:1px; background:var(--hair); }
+.section-title .count-badge{
+  font-family:var(--mono); font-size:.6875rem; font-weight:700;
+  padding:3px 8px 2px;
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  border:1px solid var(--hair);
+  color:var(--ink-45);
+  letter-spacing:.14em;
+}
+
+/* ── CONSOLE ── */
+.console{ position:sticky; top:20px; display:flex; flex-direction:column; gap:0; }
+.console__head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:14px; padding-bottom:12px;
+  border-bottom:1px solid var(--hair-strong);
+  margin-bottom:18px;
+  font-family:var(--mono); font-size:.75rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.console__head span:last-child{ color:var(--ink); }
+.console__head .live-dot{
+  display:inline-block; width:7px; height:7px; border-radius:1px;
+  background:var(--stamp); margin-right:8px;
+  animation:pulseDot 2.2s ease-in-out infinite;
+  vertical-align:middle;
+}
+.console__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:24px 22px 22px;
+  overflow:hidden;
+}
+.console__body::before{
+  content:""; position:absolute; width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+}
+.console__body::after{
+  content:""; position:absolute; width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+}
+
+/* Stats grid */
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:18px;
+}
+.stat{
+  padding:12px 14px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+}
+.stat__label{
+  font-family:var(--mono); font-size:.625rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-45); margin-bottom:6px;
+}
+.stat__value{
+  font-family:var(--mono); font-size:1rem; font-weight:700;
+  color:var(--ink); line-height:1.2;
+}
+.stat--accent .stat__value{ color:var(--accent); }
+.stat--success .stat__value{ color:var(--success); }
+
+/* Progress bar */
+.progress-bar{
+  height:6px;
+  border:1px solid var(--hair);
+  border-radius:1px;
+  background:var(--paper-deep);
+  overflow:hidden;
+  margin-bottom:16px;
+  position:relative;
+}
+.progress-bar__fill{
+  height:100%;
+  width:0%;
+  background:var(--accent);
+  transition:width .35s ease;
+  position:relative;
+}
+.progress-bar__fill::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,.35),
+    transparent);
+  animation:shimmer 1.6s infinite;
+}
+@keyframes shimmer{
+  0%  { transform:translateX(-100%); }
+  100%{ transform:translateX(100%); }
+}
+
+/* Status bar */
+.status-bar{
+  padding:12px 14px;
+  border-radius:var(--r);
+  font-family:var(--mono); font-size:.75rem; font-weight:500;
+  line-height:1.65; letter-spacing:.04em;
+  display:none;
+  border:1px solid transparent;
+  margin-bottom:16px;
+}
+.status-bar--info{
+  background:var(--paper-deep);
+  border-color:var(--hair);
+  color:var(--ink-70);
+  display:block;
+}
+.status-bar--success{
+  background:rgba(159,181,138,.08);
+  border-color:rgba(159,181,138,.4);
+  color:var(--success);
+  display:block;
+}
+.status-bar--error{
+  background:rgba(224,135,112,.08);
+  border-color:rgba(224,135,112,.4);
+  color:var(--error);
+  display:block;
+}
+.status-bar--warning{
+  background:rgba(201,154,90,.08);
+  border-color:rgba(201,154,90,.4);
+  color:var(--warning);
+  display:block;
+}
+
+/* Console buttons */
+.console-actions{ display:flex; flex-direction:column; gap:10px; }
+
+.btn{
+  padding:14px 20px;
+  border:1px solid transparent;
+  border-radius:var(--r);
+  font-family:var(--mono); font-size:.8125rem; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, color .2s ease, border-color .2s ease, transform .08s ease, opacity .2s ease;
+  display:inline-flex; align-items:center; justify-content:center; gap:11px;
+  width:100%;
+  position:relative; overflow:hidden;
+}
+.btn--primary{
+  background:var(--accent); color:var(--paper);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+}
+.btn--primary:hover:not(:disabled){ background:var(--accent-lo); }
+.btn--primary:active:not(:disabled){
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+}
+.btn--secondary{
+  background:transparent; color:var(--ink-70);
+  border-color:var(--hair-strong);
+}
+.btn--secondary:hover:not(:disabled){
+  border-color:var(--accent); color:var(--accent);
+  background:var(--paper-deep);
+}
+.btn--danger{
+  background:transparent; color:var(--error);
+  border-color:var(--hair-strong);
+}
+.btn--danger:hover:not(:disabled){
+  border-color:var(--error);
+  background:rgba(224,135,112,.08);
+}
+.btn:disabled{ opacity:.35; cursor:not-allowed; }
+
+/* ── DROPZONE ── */
+.dropzone{
+  border:1px dashed var(--hair-strong);
+  border-radius:var(--r);
+  padding:44px 24px 36px;
+  text-align:center;
+  transition:border-color .2s ease, background .2s ease;
+  position:relative;
+  overflow:hidden;
+  background:var(--paper-deep);
+}
+.dropzone:hover,
+.dropzone.dragover{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+}
+.dropzone.has-files{
+  border-style:solid;
+  border-color:var(--hair-strong);
+  padding:24px 20px 20px;
+}
+.dropzone__icon{
+  margin-bottom:14px; color:var(--ink-45);
+  transition:color .2s ease, transform .2s ease;
+}
+.dropzone__icon svg{
+  width:32px; height:32px;
+  stroke:currentColor; fill:none;
+  stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;
+}
+.dropzone:hover .dropzone__icon{
+  color:var(--accent); transform:translateY(-2px);
+}
+.dropzone__text{
+  font-size:1rem; font-weight:500;
+  color:var(--ink-70);
+  margin-bottom:6px;
+}
+.dropzone__subtext{
+  font-family:var(--mono); font-size:.6875rem; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-45);
+  margin-bottom:18px;
+}
+.dropzone__actions{
+  display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+}
+.dropzone__btn{
+  display:inline-flex; align-items:center; gap:9px;
+  padding:11px 18px;
+  border:1px solid var(--hair-strong);
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.dropzone__btn:hover{
+  border-color:var(--accent); color:var(--accent);
+  background:var(--paper-deep);
+}
+.dropzone__btn--primary{
+  background:var(--accent); color:var(--paper); border-color:var(--accent);
+}
+.dropzone__btn--primary:hover{
+  background:var(--accent-lo); border-color:var(--accent-lo); color:var(--paper);
+}
+.dropzone__btn i{ font-size:.8rem; }
+
+/* hidden file inputs */
+.file-input-hidden{
+  position:absolute; width:0; height:0; opacity:0;
+  pointer-events:none;
+}
+
+/* ── SETTINGS ── */
+.settings{ display:flex; flex-wrap:wrap; gap:20px; align-items:end; }
+.field{ display:flex; flex-direction:column; gap:8px; flex:1; min-width:180px; }
+.field label{
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-45);
+}
+.field select,
+.field input[type="number"]{
+  font-family:var(--mono); font-size:.9375rem; font-weight:500;
+  padding:14px 16px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  color:var(--ink);
+  appearance:none; -webkit-appearance:none;
+  cursor:pointer;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  width:100%;
+}
+.field select:hover,
+.field input[type="number"]:hover{ border-color:var(--hair-strong); }
+.field select:focus,
+.field input[type="number"]:focus{
+  outline:none; border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+.field select{
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-45) 50%),
+    linear-gradient(135deg, var(--ink-45) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% - 3px),
+    calc(100% - 15px) calc(50% - 3px);
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+  padding-right:40px;
+}
+.field select option{ background:var(--paper-raise); color:var(--ink); }
+.field__hint{
+  font-size:.6875rem; font-weight:500;
+  color:var(--ink-45); line-height:1.6;
+  font-family:var(--sans); letter-spacing:0; text-transform:none;
+}
+
+/* ── QUEUE ── */
+.queue{ display:flex; flex-direction:column; gap:0; max-height:520px; overflow-y:auto; margin:-6px 0; }
+.queue::-webkit-scrollbar{ width:6px; }
+.queue::-webkit-scrollbar-thumb{ background:var(--hair-strong); border-radius:2px; }
+
+.queue-empty{
+  text-align:center; padding:36px 20px;
+  font-family:var(--mono); font-size:.75rem; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-25); line-height:2.2;
+}
+.queue-empty i{ display:block; font-size:1.5rem; margin-bottom:14px; opacity:.5; }
+
+.queue-item{
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr) auto;
+  gap:14px; align-items:center;
+  padding:12px 14px;
+  border-bottom:1px dotted var(--ink-15);
+  cursor:pointer;
+  transition:background .15s ease;
+  position:relative;
+}
+.queue-item:last-child{ border-bottom:0; }
+.queue-item:hover{ background:rgba(237,231,217,.02); }
+.queue-item.selected{
+  background:var(--paper-deep);
+  box-shadow:inset 2px 0 0 var(--accent);
+}
+
+.queue-item__dot{
+  width:10px; height:10px;
+  border-radius:50%;
+  background:var(--ink-25);
+  border:1px solid var(--hair-strong);
+  transition:all .25s ease;
+  flex-shrink:0;
+  margin-left:6px;
+}
+.queue-item[data-status="pending"]     .queue-item__dot{ background:transparent; }
+.queue-item[data-status="processing"]  .queue-item__dot{
+  background:var(--accent);
+  border-color:var(--accent);
+  animation:pulseDot 1.2s ease-in-out infinite;
+}
+.queue-item[data-status="done"]        .queue-item__dot{
+  background:var(--success); border-color:var(--success);
+}
+.queue-item[data-status="no-change"]   .queue-item__dot{
+  background:var(--warning); border-color:var(--warning);
+}
+.queue-item[data-status="error"]       .queue-item__dot{
+  background:var(--error); border-color:var(--error);
+}
+
+.queue-item__info{ min-width:0; }
+.queue-item__name{
+  font-family:var(--mono); font-size:.8125rem; font-weight:600;
+  color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  margin-bottom:2px;
+}
+.queue-item__meta{
+  font-family:var(--mono); font-size:.6875rem; font-weight:500;
+  color:var(--ink-45);
+  letter-spacing:.04em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.queue-item__meta .arrow{ color:var(--accent); margin:0 6px; }
+.queue-item__meta .savings{ color:var(--success); }
+.queue-item__meta .loss{ color:var(--warning); }
+.queue-item__meta .err{ color:var(--error); }
+
+.queue-item__actions{
+  display:flex; gap:6px; align-items:center;
+}
+.queue-item__btn{
+  width:28px; height:28px;
+  border-radius:var(--r);
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--ink-25);
+  cursor:pointer;
+  display:grid; place-items:center;
+  font-size:.75rem;
+  transition:all .15s ease;
+}
+.queue-item:hover .queue-item__btn{ color:var(--ink-45); }
+.queue-item__btn:hover{
+  color:var(--accent); border-color:var(--hair);
+  background:var(--paper-raise);
+}
+.queue-item__btn--remove:hover{
+  color:var(--error); border-color:rgba(224,135,112,.4);
+}
+.queue-item__btn:disabled{
+  opacity:.25; cursor:not-allowed;
+}
+
+/* ── PREVIEW ── */
+.previews{
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:24px; margin-top:6px;
+}
+.preview-panel__label{
+  font-family:var(--mono); font-size:.6875rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--ink-45); margin-bottom:10px;
+  display:flex; align-items:center; gap:10px;
+}
+.preview-panel__label::after{
+  content:""; flex:1; height:1px; background:var(--hair);
+}
+.preview-panel__image-wrap{
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  overflow:hidden;
+  background:var(--paper-deep);
+  background-image:
+    linear-gradient(45deg, rgba(237,231,217,.035) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(237,231,217,.035) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(237,231,217,.035) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(237,231,217,.035) 75%);
+  background-size:16px 16px;
+  background-position:0 0, 0 8px, 8px -8px, -8px 0px;
+  display:flex; align-items:center; justify-content:center;
+  min-height:200px; margin-bottom:14px;
+  position:relative; padding:12px;
+}
+.preview-panel__image-wrap img{
+  max-width:100%; max-height:320px;
+  object-fit:contain; display:block;
+  border-radius:1px;
+}
+.preview-panel__empty{
+  font-family:var(--mono); font-size:.75rem; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-25);
+  text-align:center;
+}
+.preview-panel__meta{
+  font-family:var(--mono); font-size:.75rem;
+  color:var(--ink-70); line-height:1.9;
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center;
+}
+.meta-tag{
+  display:inline-flex; align-items:center;
+  padding:3px 8px 2px;
+  border-radius:var(--r);
+  font-family:var(--mono); font-size:.625rem; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  border:1px solid var(--hair);
+  color:var(--ink-45);
+  background:var(--paper-deep);
+}
+.meta-tag--verified{
+  border-color:rgba(159,181,138,.45);
+  background:rgba(159,181,138,.08);
+  color:var(--success);
+}
+.meta-tag--format{
+  border-color:var(--hair-strong);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+}
+
+/* candidates */
+.candidates{
+  margin-top:20px; padding:16px 18px 14px;
+  background:var(--paper-deep);
+  border:1px solid var(--hair); border-radius:var(--r);
+  font-family:var(--mono); font-size:.75rem;
+  color:var(--ink-70); line-height:1.7;
+}
+.candidates__title{
+  font-family:var(--mono); font-size:.6875rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--ink-45);
+  margin-bottom:10px; padding-bottom:8px;
+  border-bottom:1px dotted var(--ink-15);
+}
+.candidates__row{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:12px; padding:6px 0;
+  border-bottom:1px dotted var(--ink-15);
+}
+.candidates__row:last-child{ border-bottom:0; }
+.candidates__row--best{ color:var(--accent); font-weight:600; }
+.candidates__check{ color:var(--success); font-weight:600; }
+.candidates__cross{ color:var(--error); font-weight:600; }
+.candidates__besttag{
+  display:inline-block; margin-left:8px;
+  padding:2px 6px;
+  font-size:.5625rem; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  background:var(--accent); color:var(--paper);
+  border-radius:1px; vertical-align:middle;
+}
+
+/* spinner */
+.spinner{
+  display:inline-block;
+  width:12px; height:12px;
+  border:2px solid var(--ink-25);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  vertical-align:middle;
+  margin-right:8px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ── COLOPHON ── */
+footer{
+  margin-top:80px; padding:26px 0 64px;
+  border-top:3px double var(--ink-25);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-45); text-align:center;
+}
+footer span{ color:var(--accent); }
+
+.hidden{ display:none !important; }
+
+/* focus */
+.back-btn:focus-visible,
+.runhead__nav a:focus-visible,
+.btn:focus-visible,
+.dropzone__btn:focus-visible,
+.field select:focus-visible,
+.field input:focus-visible,
+.queue-item:focus-visible{
+  outline:1px solid var(--accent); outline-offset:3px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:1180px){
+  .workspace{ grid-template-columns:minmax(0,1fr) 340px; gap:40px; }
+}
+@media (max-width:1000px){
+  .titleblock{ grid-template-columns:1fr; gap:32px; padding:44px 0 32px; }
+  .titleblock__spec{
+    border-left:0; padding-left:0;
+    padding-top:22px; border-top:1px solid var(--hair);
+  }
+  .workspace{ grid-template-columns:1fr; gap:32px; padding:36px 0 24px; }
+  .console{ position:static; }
+  .previews{ grid-template-columns:1fr; }
+}
+@media (max-width:700px){
+  body{ font-size:16px; }
+  .sheet{ padding:0 18px; }
+  .runhead__top{ gap:12px; }
+  .runhead__nav a{ font-size:.6875rem; padding:9px 12px 8px; }
+  .back-btn{ font-size:.6875rem; padding:9px 14px 8px; }
+  .runhead__folios{ font-size:.6875rem; }
+  .titleblock h1{ font-size:clamp(2.25rem, 8vw, 3.25rem); }
+  .deck{ font-size:1rem; }
+  .plate{ grid-template-columns:1fr; }
+  .plate__num{ font-size:1.5rem; padding-top:0; padding-bottom:8px; }
+  .plate__num::after{ display:none; }
+  .plate__body{ padding:24px 18px 22px; }
+  .console__body{ padding:20px 16px 18px; }
+  .settings{ flex-direction:column; align-items:stretch; }
+  .dropzone{ padding:32px 16px 26px; }
+  .stats{ grid-template-columns:1fr; }
+  .orb{ display:none; }
+}
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
+
+<div class="sheet">
+  <div class="sheet__inner">
+
+    <!-- ── RUNHEAD ─────────────────────────────────────────── -->
+    <header class="runhead">
+      <div class="runhead__top">
+        <a class="back-btn" href="index.html"><i class="fas fa-arrow-left"></i> Back</a>
+
+        <div class="runhead__folios">
+          <span class="runhead__folio"><strong>Plate 06</strong> · IG-Image</span>
+          <span class="runhead__folio">TPG Service v3</span>
+        </div>
+
+        <nav class="runhead__nav">
+  <a href="downloader.html"><i class="fas fa-download"></i>Video Downloader</a>
+  <a href="pdf.html"><i class="fas fa-code"></i>HTML to PDF</a>
+  <a href="vidcom.html"><i class="fas fa-film"></i>Video Compressor</a>
+  <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+  <a href="convert.html"><i class="fas fa-sync-alt"></i>Marshell-EQ</a>
+  <a href="ig.html" class="active"><i class="fa fa-image"></i>IG-Image</a>
+</nav>
+      </div>
+    </header>
+
+    <!-- ── TITLE BLOCK ─────────────────────────────────────── -->
+    <section class="titleblock">
+      <div class="titleblock__main">
+        <div class="titleblock__meta">
+          <div class="page-badge"><span class="pulse-dot"></span> Lossless Optimizer</div>
+          <span class="version">TPG Service v4 · Batch</span>
+        </div>
+        <h1>IG-<em>Image</em></h1>
+        <p class="deck">Lossless image optimization. Drop a single file, multiple files, or an entire folder. Pixel-perfect compression, verified output, batch download as .zip.</p>
+      </div>
+
+      <aside class="titleblock__spec" aria-hidden="true">
+        <div class="spec">
+          <div class="spec__row"><span>Input</span><span>Files · Folder</span></div>
+          <div class="spec__row"><span>Output</span><span>PNG · WebP</span></div>
+          <div class="spec__row"><span>Verify</span><span>Pixel-perfect</span></div>
+          <div class="spec__row"><span>Bundle</span><span>.zip</span></div>
+        </div>
+        <div class="spec__dimension">
+          <span class="spec__dimension-line"></span>
+          <span>Client-side · No upload</span>
+          <span class="spec__dimension-line"></span>
+        </div>
+      </aside>
+    </section>
+
+    <div class="ruler" aria-hidden="true"></div>
+
+    <!-- ── WORKSPACE ───────────────────────────────────────── -->
+    <div class="workspace">
+
+      <!-- LEFT: flow -->
+      <div class="flow">
+
+        <!-- Plate 01 — Source -->
+        <div class="plate">
+          <div class="plate__num">01</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-images"></i> Source <span class="title-line"></span>
+            </div>
+
+            <div class="dropzone" id="dropzone">
+              <div class="dropzone__icon">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div class="dropzone__text" id="dropzoneText">Drop images here — or pick files / a folder</div>
+              <div class="dropzone__subtext">PNG, JPEG, WebP, GIF, BMP, AVIF · multiple allowed</div>
+
+              <div class="dropzone__actions">
+                <button type="button" class="dropzone__btn dropzone__btn--primary" id="browseFilesBtn">
+                  <i class="fas fa-file-image"></i> Choose Files
+                </button>
+                <button type="button" class="dropzone__btn" id="browseFolderBtn">
+                  <i class="fas fa-folder-open"></i> Choose Folder
+                </button>
+              </div>
+
+              <input type="file" id="fileInput"   class="file-input-hidden" accept="image/*" multiple>
+              <input type="file" id="folderInput" class="file-input-hidden" accept="image/*" webkitdirectory multiple>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plate 02 — Settings -->
+        <div class="plate">
+          <div class="plate__num">02</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-sliders"></i> Output Settings <span class="title-line"></span>
+            </div>
+
+            <div class="settings">
+              <div class="field">
+                <label for="formatSelect">Output format</label>
+                <select id="formatSelect">
+                  <option value="auto">Auto — smallest verified</option>
+                  <option value="png">PNG only</option>
+                  <option value="webp">Lossless WebP only</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="targetKb">Target size (KB)</label>
+                <input type="number" id="targetKb" placeholder="Optional" min="1" step="1">
+                <div class="field__hint">Informational only — lossless output cannot be forced to a target size.</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plate 03 — Queue -->
+        <div class="plate">
+          <div class="plate__num">03</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-list-check"></i> Queue <span class="title-line"></span>
+              <span class="count-badge" id="queueCount">0 files</span>
+            </div>
+
+            <div class="queue" id="queue">
+              <div class="queue-empty" id="queueEmpty">
+                <i class="fas fa-inbox"></i>
+                No files queued yet<br>Drop images or pick a folder to begin
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plate 04 — Preview -->
+        <div class="plate">
+          <div class="plate__num">04</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-code-compare"></i> Preview <span class="title-line"></span>
+              <span class="count-badge" id="previewLabel">—</span>
+            </div>
+
+            <div class="previews hidden" id="previewArea">
+              <div class="preview-panel">
+                <div class="preview-panel__label">Original</div>
+                <div class="preview-panel__image-wrap" id="originalWrap">
+                  <span class="preview-panel__empty">No image</span>
+                </div>
+                <div class="preview-panel__meta" id="originalMeta"></div>
+              </div>
+              <div class="preview-panel">
+                <div class="preview-panel__label">Optimized</div>
+                <div class="preview-panel__image-wrap" id="optimizedWrap">
+                  <span class="preview-panel__empty">Waiting…</span>
+                </div>
+                <div class="preview-panel__meta" id="optimizedMeta"></div>
+              </div>
+            </div>
+
+            <div class="preview-panel__empty" id="previewPlaceholder" style="padding:36px 0; display:block;">
+              <i class="fas fa-hand-pointer" style="display:block; font-size:1.5rem; margin-bottom:14px; opacity:.6;"></i>
+              Click a file in the queue to preview
+            </div>
+
+            <div class="candidates hidden" id="candidatesArea"></div>
+          </section>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: console -->
+      <aside class="console">
+        <div class="console__head">
+          <span><span class="live-dot"></span>Console</span>
+          <span>Live status</span>
+        </div>
+
+        <div class="console__body">
+
+          <!-- Stats -->
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">Files</div>
+              <div class="stat__value" id="statFiles">0 / 0</div>
+            </div>
+            <div class="stat stat--accent">
+              <div class="stat__label">Original</div>
+              <div class="stat__value" id="statOriginal">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Optimized</div>
+              <div class="stat__value" id="statOptimized">—</div>
+            </div>
+            <div class="stat stat--success">
+              <div class="stat__label">Saved</div>
+              <div class="stat__value" id="statSaved">—</div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="progress-bar">
+            <div class="progress-bar__fill" id="overallProgress"></div>
+          </div>
+
+          <!-- Status -->
+          <div class="status-bar" id="statusBar"></div>
+
+          <!-- Actions -->
+          <div class="console-actions">
+            <button class="btn btn--primary" id="processAllBtn" disabled>
+              <i class="fas fa-play"></i> <span id="processAllLabel">Process All</span>
+            </button>
+            <button class="btn btn--secondary" id="downloadAllBtn" disabled>
+              <i class="fas fa-file-zipper"></i> Download All (.zip)
+            </button>
+            <button class="btn btn--danger" id="clearAllBtn" disabled>
+              <i class="fas fa-trash-can"></i> Clear Queue
+            </button>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ── COLOPHON ────────────────────────────────────────── -->
+    <footer>© 2026 TPG Service · <span>IG-Image</span></footer>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   IG-Image — Batch Lossless Optimization
+   ═══════════════════════════════════════════════════════════ */
+
+// ── DOM refs ──
+const dropzone       = document.getElementById('dropzone');
+const dropzoneText   = document.getElementById('dropzoneText');
+const browseFilesBtn = document.getElementById('browseFilesBtn');
+const browseFolderBtn= document.getElementById('browseFolderBtn');
+const fileInput      = document.getElementById('fileInput');
+const folderInput    = document.getElementById('folderInput');
+
+const formatSelect   = document.getElementById('formatSelect');
+const targetKbInput  = document.getElementById('targetKb');
+
+const queueEl        = document.getElementById('queue');
+const queueEmpty     = document.getElementById('queueEmpty');
+const queueCount     = document.getElementById('queueCount');
+
+const previewArea    = document.getElementById('previewArea');
+const originalWrap   = document.getElementById('originalWrap');
+const originalMeta   = document.getElementById('originalMeta');
+const optimizedWrap  = document.getElementById('optimizedWrap');
+const optimizedMeta  = document.getElementById('optimizedMeta');
+const candidatesArea = document.getElementById('candidatesArea');
+const previewPlaceholder = document.getElementById('previewPlaceholder');
+const previewLabel   = document.getElementById('previewLabel');
+
+const statFiles      = document.getElementById('statFiles');
+const statOriginal   = document.getElementById('statOriginal');
+const statOptimized  = document.getElementById('statOptimized');
+const statSaved      = document.getElementById('statSaved');
+const overallProgress= document.getElementById('overallProgress');
+const statusBar      = document.getElementById('statusBar');
+
+const processAllBtn  = document.getElementById('processAllBtn');
+const processAllLabel= document.getElementById('processAllLabel');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearAllBtn    = document.getElementById('clearAllBtn');
+
+// ── State ──
+let queue = [];          // array of items
+let selectedId = null;
+let isProcessing = false;
+let shouldAbort = false;
+let nextId = 1;
+const objectURLs = [];
+
+// ── Utilities ──
+function fmtSize(bytes) {
+  if (bytes == null) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(2) + ' MB';
+}
+
+function trackURL(url) { objectURLs.push(url); return url; }
+
+function revokeAllURLs() {
+  objectURLs.forEach(u => URL.revokeObjectURL(u));
+  objectURLs.length = 0;
+}
+
+function setStatus(msg, type) {
+  statusBar.textContent = msg;
+  statusBar.className = 'status-bar status-bar--' + type;
+}
+
+function clearStatus() {
+  statusBar.className = 'status-bar';
+  statusBar.textContent = '';
+}
+
+// ── Image decode/encode helpers ──
+function decodeToImageData(blob) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve({
+        imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+        width:  canvas.width,
+        height: canvas.height,
+      });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to decode image')); };
+    img.src = url;
+  });
+}
+
+function encodeCanvas(canvas, mimeType, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error('Encoding failed for ' + mimeType));
+    }, mimeType, quality);
+  });
+}
+
+function pixelsMatch(a, b) {
+  if (a.width !== b.width || a.height !== b.height) return false;
+  const len = a.data.length;
+  if (len !== b.data.length) return false;
+  const u32a = new Uint32Array(a.data.buffer, a.data.byteOffset, len / 4);
+  const u32b = new Uint32Array(b.data.buffer, b.data.byteOffset, len / 4);
+  for (let i = 0, n = u32a.length; i < n; i++) {
+    if (u32a[i] !== u32b[i]) return false;
+  }
+  return true;
+}
+
+// ── File input actions ──
+browseFilesBtn.addEventListener('click', () => fileInput.click());
+browseFolderBtn.addEventListener('click', () => folderInput.click());
+
+fileInput.addEventListener('change', e => {
+  addFiles(e.target.files);
+  fileInput.value = '';
+});
+
+folderInput.addEventListener('change', e => {
+  addFiles(e.target.files);
+  folderInput.value = '';
+});
+
+// ── Drag & drop ──
+dropzone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzone.classList.add('dragover');
+});
+dropzone.addEventListener('dragleave', () => {
+  dropzone.classList.remove('dragover');
+});
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+});
+
+// ── Add files to queue ──
+function addFiles(fileList) {
+  const images = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (!images.length) {
+    setStatus('No image files in that selection.', 'warning');
+    return;
+  }
+
+  let added = 0;
+  images.forEach(f => {
+    const item = {
+      id: nextId++,
+      file: f,
+      name: f.name,
+      status: 'pending',
+      error: null,
+      originalSize: f.size,
+      originalWidth: null,
+      originalHeight: null,
+      optimizedSize: null,
+      optimizedBlob: null,
+      optimizedFilename: null,
+      optimizedLabel: null,
+      savings: 0,
+      savingsPercent: 0,
+      candidateResults: null,
+      needsReprocess: false,
+    };
+    queue.push(item);
+    added++;
+  });
+
+  dropzone.classList.add('has-files');
+  dropzoneText.textContent = `${queue.length} file${queue.length === 1 ? '' : 's'} queued`;
+
+  renderQueue();
+  updateStats();
+  updateConsoleButtons();
+
+  setStatus(`Added ${added} file${added === 1 ? '' : 's'} to queue. Click Process All to begin.`, 'info');
+
+  // Auto-select first new item for preview
+  if (!selectedId && queue.length) {
+    selectItem(queue[0].id);
+  }
+}
+
+// ── Queue rendering ──
+function renderQueue() {
+  queueEmpty.classList.toggle('hidden', queue.length > 0);
+  queueCount.textContent = `${queue.length} file${queue.length === 1 ? '' : 's'}`;
+
+  // Remove old rows
+  Array.from(queueEl.querySelectorAll('.queue-item')).forEach(el => el.remove());
+
+  queue.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'queue-item' + (item.id === selectedId ? ' selected' : '');
+    row.dataset.id = item.id;
+    row.dataset.status = item.status;
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+
+    let meta = '';
+    if (item.status === 'pending') {
+      meta = `<span>${fmtSize(item.originalSize)}</span><span class="arrow">·</span><span>pending</span>`;
+    } else if (item.status === 'processing') {
+      meta = `<span>${fmtSize(item.originalSize)}</span><span class="arrow">→</span><span>processing…</span>`;
+    } else if (item.status === 'done') {
+      const pct = item.savingsPercent.toFixed(1);
+      meta = `<span>${fmtSize(item.originalSize)}</span><span class="arrow">→</span><span>${fmtSize(item.optimizedSize)}</span><span class="arrow">·</span><span class="savings">−${pct}%</span>`;
+    } else if (item.status === 'no-change') {
+      meta = `<span>${fmtSize(item.originalSize)}</span><span class="arrow">·</span><span class="loss">no reduction</span>`;
+    } else if (item.status === 'error') {
+      meta = `<span class="err">error: ${escapeHtml(item.error || 'failed')}</span>`;
+    }
+
+    row.innerHTML = `
+      <div class="queue-item__dot"></div>
+      <div class="queue-item__info">
+        <div class="queue-item__name">${escapeHtml(item.name)}</div>
+        <div class="queue-item__meta">${meta}</div>
+      </div>
+      <div class="queue-item__actions">
+        <button class="queue-item__btn queue-item__btn--download"
+                title="Download" ${item.optimizedBlob ? '' : 'disabled'}>
+          <i class="fas fa-download"></i>
+        </button>
+        <button class="queue-item__btn queue-item__btn--remove"
+                title="Remove from queue">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    `;
+
+    // Row click → select
+    row.addEventListener('click', e => {
+      if (e.target.closest('.queue-item__btn')) return;
+      selectItem(item.id);
+    });
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectItem(item.id);
+      }
+    });
+
+    // Download button
+    const dlBtn = row.querySelector('.queue-item__btn--download');
+    dlBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      downloadItem(item.id);
+    });
+
+    // Remove button
+    const rmBtn = row.querySelector('.queue-item__btn--remove');
+    rmBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      removeItem(item.id);
+    });
+
+    queueEl.appendChild(row);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+// ── Select item for preview ──
+function selectItem(id) {
+  selectedId = id;
+  const item = queue.find(x => x.id === id);
+  if (!item) return;
+
+  // Update row selection style
+  Array.from(queueEl.querySelectorAll('.queue-item')).forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.id, 10) === id);
+  });
+
+  previewArea.classList.remove('hidden');
+  previewPlaceholder.classList.add('hidden');
+  previewLabel.textContent = item.name.length > 24 ? item.name.slice(0, 22) + '…' : item.name;
+
+  // Original
+  const origUrl = trackURL(URL.createObjectURL(item.file));
+  originalWrap.innerHTML = '';
+  const origImg = document.createElement('img');
+  origImg.src = origUrl;
+  originalWrap.appendChild(origImg);
+
+  const ext = (item.name.split('.').pop() || '').toUpperCase();
+  const dims = item.originalWidth ? `${item.originalWidth} × ${item.originalHeight}` : '';
+  originalMeta.innerHTML = `
+    <span class="meta-tag meta-tag--format">${ext}</span>
+    ${dims ? `<span>${dims}</span>` : ''}
+    <span>${fmtSize(item.originalSize)}</span>
+  `;
+
+  // Optimized
+  if (item.status === 'processing') {
+    optimizedWrap.innerHTML = '<span class="preview-panel__empty"><span class="spinner"></span> Processing…</span>';
+    optimizedMeta.innerHTML = '';
+  } else if (item.status === 'done' && item.optimizedBlob) {
+    const optUrl = trackURL(URL.createObjectURL(item.optimizedBlob));
+    optimizedWrap.innerHTML = '';
+    const optImg = document.createElement('img');
+    optImg.src = optUrl;
+    optimizedWrap.appendChild(optImg);
+
+    optimizedMeta.innerHTML = `
+      <span class="meta-tag meta-tag--format">${item.optimizedLabel}</span>
+      <span class="meta-tag meta-tag--verified">✓ Verified</span>
+      <span>${item.originalWidth} × ${item.originalHeight}</span>
+      <span>${fmtSize(item.optimizedSize)}</span>
+    `;
+  } else if (item.status === 'no-change') {
+    const optUrl = trackURL(URL.createObjectURL(item.file));
+    optimizedWrap.innerHTML = '';
+    const optImg = document.createElement('img');
+    optImg.src = optUrl;
+    optimizedWrap.appendChild(optImg);
+
+    optimizedMeta.innerHTML = `
+      <span class="meta-tag meta-tag--format">${item.optimizedLabel || ext}</span>
+      <span class="meta-tag meta-tag--verified">✓ Verified</span>
+      <span>${fmtSize(item.originalSize)}</span>
+      <span style="color:var(--ink-45)">(no reduction)</span>
+    `;
+  } else if (item.status === 'error') {
+    optimizedWrap.innerHTML = `<span class="preview-panel__empty">${escapeHtml(item.error || 'Failed')}</span>`;
+    optimizedMeta.innerHTML = '';
+  } else {
+    optimizedWrap.innerHTML = '<span class="preview-panel__empty">Not processed yet</span>';
+    optimizedMeta.innerHTML = '';
+  }
+
+  // Candidates
+  if (item.candidateResults && item.candidateResults.length > 1) {
+    let html = '<div class="candidates__title">Candidate Comparison</div>';
+    const sorted = [...item.candidateResults].sort((a, b) => a.size - b.size);
+    const best = item.optimizedBlob && item.candidateResults.find(c => c.isBest);
+    sorted.forEach(c => {
+      html += `<div class="candidates__row${c.isBest ? ' candidates__row--best' : ''}">`;
+      html += `<span>${c.label} — ${fmtSize(c.size)}`;
+      if (c.isBest) html += '<span class="candidates__besttag">Best</span>';
+      html += '</span>';
+      html += `<span>${c.verified ? '<span class="candidates__check">✓ Verified</span>' : '<span class="candidates__cross">✗ Pixel mismatch</span>'}</span>`;
+      html += '</div>';
+    });
+    candidatesArea.innerHTML = html;
+    candidatesArea.classList.remove('hidden');
+  } else {
+    candidatesArea.classList.add('hidden');
+  }
+}
+
+// ── Remove / clear ──
+function removeItem(id) {
+  const idx = queue.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  queue.splice(idx, 1);
+
+  if (selectedId === id) {
+    selectedId = queue.length ? queue[0].id : null;
+    if (selectedId) {
+      selectItem(selectedId);
+    } else {
+      previewArea.classList.add('hidden');
+      previewPlaceholder.style.display = 'block';
+      previewLabel.textContent = '—';
+      candidatesArea.classList.add('hidden');
+    }
+  }
+
+  if (queue.length === 0) {
+    dropzone.classList.remove('has-files');
+    dropzoneText.textContent = 'Drop images here — or pick files / a folder';
+  } else {
+    dropzoneText.textContent = `${queue.length} file${queue.length === 1 ? '' : 's'} queued`;
+  }
+
+  renderQueue();
+  updateStats();
+  updateConsoleButtons();
+}
+
+clearAllBtn.addEventListener('click', () => {
+  if (isProcessing) return;
+  queue.length = 0;
+  selectedId = null;
+  previewArea.classList.add('hidden');
+  previewPlaceholder.style.display = 'block';
+  previewLabel.textContent = '—';
+  candidatesArea.classList.add('hidden');
+  dropzone.classList.remove('has-files');
+  dropzoneText.textContent = 'Drop images here — or pick files / a folder';
+  renderQueue();
+  updateStats();
+  updateConsoleButtons();
+  clearStatus();
+  revokeAllURLs();
+});
+
+// ── Stats & progress ──
+function updateStats() {
+  const total = queue.length;
+  const done  = queue.filter(x => x.status === 'done' || x.status === 'no-change').length;
+
+  statFiles.textContent = `${done} / ${total}`;
+
+  const origBytes = queue.reduce((s, x) => s + (x.originalSize || 0), 0);
+  statOriginal.textContent = total ? fmtSize(origBytes) : '—';
+
+  const optItems = queue.filter(x => x.status === 'done' && x.optimizedSize != null);
+  if (optItems.length === 0) {
+    statOptimized.textContent = '—';
+    statSaved.textContent = '—';
+  } else {
+    const optBytes = optItems.reduce((s, x) => s + x.optimizedSize, 0);
+    const doneOrigBytes = optItems.reduce((s, x) => s + x.originalSize, 0);
+    const saved = doneOrigBytes - optBytes;
+    const pct = doneOrigBytes ? (saved / doneOrigBytes) * 100 : 0;
+    statOptimized.textContent = fmtSize(optBytes);
+    statSaved.textContent = saved > 0 ? `−${pct.toFixed(1)}%` : '0%';
+  }
+
+  const pct = total ? (done / total) * 100 : 0;
+  overallProgress.style.width = pct + '%';
+}
+
+function updateConsoleButtons() {
+  const hasQueue = queue.length > 0;
+  const hasPending = queue.some(x => x.status === 'pending' || x.status === 'error');
+  const hasReady = queue.some(x => x.status === 'done' && x.optimizedBlob);
+
+  processAllBtn.disabled = !hasQueue || !hasPending || isProcessing;
+  processAllLabel.textContent = isProcessing ? 'Processing…' : (hasPending ? 'Process All' : 'All Processed');
+
+  downloadAllBtn.disabled = !hasReady || isProcessing;
+  clearAllBtn.disabled = !hasQueue || isProcessing;
+}
+
+// ── Process one item ──
+async function processOne(item) {
+  item.status = 'processing';
+  renderQueue();
+  updateStats();
+
+  try {
+    setStatus(`Processing ${item.name}…`, 'info');
+
+    const { imageData, width, height } = await decodeToImageData(item.file);
+    item.originalWidth  = width;
+    item.originalHeight = height;
+
+    // Build canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').putImageData(imageData, 0, 0);
+
+    // Encode candidates
+    const format = formatSelect.value;
+    const candidates = [];
+
+    if (format === 'auto' || format === 'png') {
+      try {
+        const blob = await encodeCanvas(canvas, 'image/png');
+        candidates.push({ blob, label: 'PNG', mime: 'image/png', ext: 'png' });
+      } catch (e) { /* unsupported */ }
+    }
+    if (format === 'auto' || format === 'webp') {
+      try {
+        const blob = await encodeCanvas(canvas, 'image/webp', 1.0);
+        if (blob) candidates.push({ blob, label: 'WebP', mime: 'image/webp', ext: 'webp' });
+      } catch (e) { /* unsupported */ }
+    }
+
+    if (candidates.length === 0) {
+      item.status = 'error';
+      item.error = 'No encoder available';
+      renderQueue();
+      updateStats();
+      return;
+    }
+
+    // Verify
+    const verified = [];
+    for (const c of candidates) {
+      try {
+        const { imageData: cData } = await decodeToImageData(c.blob);
+        const match = pixelsMatch(imageData, cData);
+        c.verified = match;
+        c.size = c.blob.size;
+        if (match) verified.push(c);
+      } catch (e) {
+        c.verified = false;
+        c.size = c.blob.size;
+      }
+    }
+
+    if (verified.length === 0) {
+      item.status = 'error';
+      item.error = 'No verified encoding';
+      item.candidateResults = candidates.map(c => ({
+        label: c.label, size: c.size, verified: false, isBest: false,
+      }));
+      renderQueue();
+      updateStats();
+      return;
+    }
+
+    verified.sort((a, b) => a.size - b.size);
+    const best = verified[0];
+    const isSmaller = best.size < item.originalSize;
+
+    // Store candidate comparison
+    item.candidateResults = candidates.map(c => ({
+      label: c.label,
+      size: c.size,
+      verified: !!c.verified,
+      isBest: c === best,
+    }));
+
+    if (isSmaller) {
+      const baseName = item.name.replace(/\.[^.]+$/, '');
+      item.optimizedBlob     = best.blob;
+      item.optimizedFilename = baseName + '_optimized.' + best.ext;
+      item.optimizedSize     = best.size;
+      item.optimizedLabel    = best.label;
+      item.savings           = item.originalSize - best.size;
+      item.savingsPercent    = (item.savings / item.originalSize) * 100;
+      item.status = 'done';
+    } else {
+      // No reduction — keep original as fallback
+      item.optimizedBlob     = item.file;
+      item.optimizedFilename = item.name;
+      item.optimizedSize     = best.size;
+      item.optimizedLabel    = best.label;
+      item.savings           = 0;
+      item.savingsPercent    = 0;
+      item.status = 'no-change';
+    }
+
+    renderQueue();
+    updateStats();
+
+    if (selectedId === item.id) selectItem(item.id);
+
+  } catch (err) {
+    item.status = 'error';
+    item.error = err.message || 'Unknown error';
+    renderQueue();
+    updateStats();
+    if (selectedId === item.id) selectItem(item.id);
+  }
+}
+
+// ── Process all ──
+processAllBtn.addEventListener('click', async () => {
+  if (isProcessing) return;
+  isProcessing = true;
+  shouldAbort = false;
+  updateConsoleButtons();
+
+  const targets = queue.filter(x => x.status === 'pending' || x.status === 'error');
+  let done = 0;
+
+  for (const item of targets) {
+    if (shouldAbort) break;
+    await processOne(item);
+    done++;
+    updateStats();
+    await new Promise(r => setTimeout(r, 20)); // yield to UI
+  }
+
+  isProcessing = false;
+  updateConsoleButtons();
+
+  const withSavings = queue.filter(x => x.status === 'done').length;
+  const noChange    = queue.filter(x => x.status === 'no-change').length;
+  const errors      = queue.filter(x => x.status === 'error').length;
+
+  let msg = `Batch complete — ${withSavings} optimized`;
+  if (noChange) msg += `, ${noChange} no reduction`;
+  if (errors)   msg += `, ${errors} error${errors === 1 ? '' : 's'}`;
+  msg += '.';
+
+  setStatus(msg, errors ? 'warning' : 'success');
+
+  // Auto-select first completed item if nothing selected
+  if (!selectedId && queue.length) {
+    const firstDone = queue.find(x => x.status === 'done') || queue[0];
+    selectItem(firstDone.id);
+  }
+});
+
+// ── Download one ──
+function downloadItem(id) {
+  const item = queue.find(x => x.id === id);
+  if (!item || !item.optimizedBlob) return;
+
+  const url = URL.createObjectURL(item.optimizedBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = item.optimizedFilename || item.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 200);
+}
+
+// ── Download all as .zip ──
+downloadAllBtn.addEventListener('click', async () => {
+  const ready = queue.filter(x => x.optimizedBlob && (x.status === 'done' || x.status === 'no-change'));
+  if (!ready.length) return;
+
+  if (typeof JSZip === 'undefined') {
+    setStatus('ZIP library failed to load. Check your connection.', 'error');
+    return;
+  }
+
+  downloadAllBtn.disabled = true;
+  setStatus(`Packaging ${ready.length} file${ready.length === 1 ? '' : 's'} into .zip…`, 'info');
+
+  try {
+    const zip = new JSZip();
+    const used = new Set();
+
+    ready.forEach(item => {
+      let name = item.optimizedFilename || item.name;
+      // Ensure unique names inside zip
+      let finalName = name;
+      let n = 1;
+      while (used.has(finalName)) {
+        const dotIdx = name.lastIndexOf('.');
+        if (dotIdx > 0) {
+          finalName = name.slice(0, dotIdx) + '_' + n + name.slice(dotIdx);
+        } else {
+          finalName = name + '_' + n;
+        }
+        n++;
+      }
+      used.add(finalName);
+      zip.file(finalName, item.optimizedBlob);
+    });
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'STORE', // images are already compressed
+    }, meta => {
+      if (meta.percent) {
+        setStatus(`Packaging… ${meta.percent.toFixed(0)}%`, 'info');
+      }
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const stamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+    a.download = `ig-image_${ready.length}files_${stamp}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 300);
+
+    setStatus(`Downloaded ${ready.length} file${ready.length === 1 ? '' : 's'} as .zip (${fmtSize(blob.size)}).`, 'success');
+  } catch (err) {
+    setStatus('Failed to build .zip: ' + err.message, 'error');
+  } finally {
+    downloadAllBtn.disabled = false;
+    updateConsoleButtons();
+  }
+});
+
+// ── Reprocess on settings change ──
+formatSelect.addEventListener('change', reprocessAll);
+targetKbInput.addEventListener('input', () => {
+  // Target is informational only — no reprocessing needed
+});
+
+function reprocessAll() {
+  if (!queue.length || isProcessing) return;
+
+  // Reset processed items back to pending
+  queue.forEach(item => {
+    if (item.status === 'done' || item.status === 'no-change' || item.status === 'error') {
+      item.status = 'pending';
+      item.optimizedBlob = null;
+      item.optimizedSize = null;
+      item.optimizedFilename = null;
+      item.optimizedLabel = null;
+      item.savings = 0;
+      item.savingsPercent = 0;
+      item.candidateResults = null;
+      item.error = null;
+    }
+  });
+
+  renderQueue();
+  updateStats();
+  updateConsoleButtons();
+
+  if (selectedId) selectItem(selectedId);
+  setStatus('Settings changed. Click Process All to re-run the batch.', 'info');
+}
+
+// ── Cleanup on unload ──
+window.addEventListener('beforeunload', () => revokeAllURLs());
+
+// ── Init ──
+renderQueue();
+updateStats();
+updateConsoleButtons();
+</script>
+</body>
+</html>

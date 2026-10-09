@@ -2,100 +2,1236 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marshall EQ Studio | TPG Tools</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* ============================================================
+   TPG · DARK PENCIL · EQ STUDIO
+   Graphite on charcoal. Restructured: EQ plate up top,
+   file flow left, sticky console right.
+   ============================================================ */
+
+:root{
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
+
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
+
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
+
+  --accent:       #D4C9A8;
+  --accent-lo:    #C4B894;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+  --error:        #C97B5A;
+
+  --r:            2px;
+  --max:          1360px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  font-size:17px;
+  font-weight:500;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Graphite grain */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:.14;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+  mix-blend-mode:screen;
+}
+
+/* Vignette */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+/* Pencil top stroke */
+.top-accent{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:2px;
+  z-index:999;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(212,201,168,.10) 15%,
+    var(--accent) 50%,
+    rgba(212,201,168,.10) 85%,
+    transparent 100%);
+  background-size:200% 100%;
+  animation:accentSlide 6s linear infinite;
+  opacity:.7;
+}
+@keyframes accentSlide{
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Halftone blooms */
+.orb{
+  position:fixed;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+  opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1{ top:-120px; right:-120px; width:460px; height:460px; }
+.orb-2{ bottom:-120px; left:-120px; width:380px; height:380px; }
+.orb-3{ top:45%; right:4%; width:260px; height:260px; }
+
+/* ============================================================
+   SHEET
+   ============================================================ */
+.sheet{
+  position:relative;
+  z-index:1;
+  width:100%;
+  padding:0 40px;
+}
+.sheet__inner{
+  max-width:var(--max);
+  margin:0 auto;
+  position:relative;
+}
+
+/* ============================================================
+   RUNNING HEAD
+   ============================================================ */
+.runhead{
+  padding-top:24px;
+  border-bottom:1px solid var(--hair);
+}
+.runhead__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding-bottom:14px;
+  flex-wrap:wrap;
+}
+.runhead__folios{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.runhead__folio strong{
+  color:var(--ink);
+  font-weight:600;
+}
+.runhead__nav{
+  display:flex;
+  gap:0;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  overflow:hidden;
+  flex-wrap:wrap;
+}
+.runhead__nav a{
+  padding:10px 16px 9px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  text-decoration:none;
+  border-right:1px solid var(--hair);
+  transition:background .2s ease, color .2s ease;
+  white-space:nowrap;
+}
+.runhead__nav a:last-child{ border-right:0; }
+.runhead__nav a:hover{ color:var(--ink); background:var(--paper-deep); }
+.runhead__nav a.active{
+  color:var(--paper);
+  background:var(--accent);
+}
+.runhead__nav a i{ margin-right:7px; font-size:.8rem; }
+
+.back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px 9px;
+  border-radius:var(--r);
+  border:1px solid var(--hair-strong);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  text-decoration:none;
+  cursor:pointer;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.back-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+.back-btn i{ font-size:.8rem; transition:transform .25s ease; }
+.back-btn:hover i{ transform:translateX(-3px); }
+
+/* ============================================================
+   TITLE BLOCK
+   ============================================================ */
+.titleblock{
+  padding:72px 0 44px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:64px;
+  align-items:end;
+  position:relative;
+}
+.titleblock__main{ position:relative; }
+.titleblock__meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:26px;
+  flex-wrap:wrap;
+}
+
+.page-badge,
+.hero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  padding:8px 16px 7px 14px;
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  border:1px solid var(--hair-strong);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.page-badge .pulse-dot,
+.hero-badge .pulse-dot{
+  width:8px; height:8px;
+  border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+
+.version,
+h4{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin:0;
+}
+
+.titleblock h1{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:clamp(2.75rem, 6.4vw, 5rem);
+  line-height:.96;
+  letter-spacing:-.024em;
+  margin-bottom:18px;
+  color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.14),
+    -1px 0 0 rgba(212,201,168,.14);
+}
+.titleblock h1 em,
+.titleblock h1 .grad{
+  font-style:italic;
+  color:var(--accent);
+  background:none;
+  -webkit-text-fill-color:currentColor;
+}
+.deck,
+.hero .sub,
+.page-hero .sub{
+  font-size:1.0625rem;
+  font-weight:500;
+  color:var(--ink-70);
+  max-width:52ch;
+  line-height:1.75;
+}
+
+/* Spec column */
+.titleblock__spec{
+  border-left:1px solid var(--hair);
+  padding-left:26px;
+  padding-bottom:6px;
+}
+.spec{
+  display:grid;
+  gap:0;
+  margin-bottom:22px;
+}
+.spec__row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 0;
+  border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+.spec__dimension{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:.625rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1;
+  height:1px;
+  background:var(--hair-strong);
+  position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:"";
+  position:absolute;
+  top:-3px;
+  width:1px; height:7px;
+  background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* Deco */
+.deco{ position:absolute; pointer-events:none; }
+.deco-ring{
+  width:120px; height:120px;
+  border:1px solid var(--hair-strong);
+  border-radius:50%;
+  top:-10px; right:-180px;
+  animation:spinSlow 45s linear infinite;
+}
+.deco-ring::after{
+  content:"";
+  position:absolute;
+  width:6px; height:6px;
+  background:var(--stamp);
+  border-radius:1px;
+  top:-3px; left:50%;
+  transform:translateX(-50%);
+}
+.deco-ring-inner{
+  width:78px; height:78px;
+  border:1px dashed var(--hair);
+  border-radius:50%;
+  top:15px; right:-160px;
+  animation:spinSlow 32s linear infinite reverse;
+}
+.deco-dots{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:11px;
+  top:-20px; right:-180px;
+  margin-top:160px;
+}
+.deco-dots span{
+  width:4px; height:4px;
+  border-radius:50%;
+  background:rgba(212,201,168,.45);
+}
+.deco-dots span:nth-child(3n){ background:rgba(201,123,90,.55); }
+.deco-dots span:nth-child(7){
+  width:6px; height:6px;
+  background:rgba(237,231,217,.55);
+}
+.deco-line{
+  width:70px; height:1px;
+  background:var(--hair-strong);
+  top:-40px; right:-180px;
+}
+.deco-line-v{
+  width:1px; height:60px;
+  background:var(--hair-strong);
+  bottom:-40px; right:-180px;
+}
+@keyframes spinSlow{
+  from{ transform:rotate(0deg); }
+  to  { transform:rotate(360deg); }
+}
+
+/* ============================================================
+   RULER
+   ============================================================ */
+.ruler{
+  height:12px;
+  border-top:1px solid var(--hair);
+  border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(
+    to right,
+    var(--hair-strong) 0 1px,
+    transparent 1px 16px
+  );
+  background-position:0 3px;
+  background-repeat:repeat-x;
+  background-size:auto 6px;
+}
+
+/* ============================================================
+   EQ SECTION — full-width plate
+   ============================================================ */
+.eq-section{
+  padding:56px 0 32px;
+}
+.eq-plate{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:28px 30px 24px;
+  overflow:hidden;
+  background:
+    radial-gradient(700px circle at 30% 0%,
+      rgba(212,201,168,.05), transparent 60%),
+    var(--paper-raise);
+}
+.eq-plate::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+}
+.eq-plate::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink);
+  margin-bottom:22px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.section-title i{
+  color:var(--accent);
+  font-size:1rem;
+}
+.section-title .title-line{
+  flex:1;
+  height:1px;
+  background:var(--hair);
+}
+
+/* EQ bands — 13 rows */
+.eq-container{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+  margin-bottom:20px;
+}
+
+.eq-band{
+  display:grid;
+  grid-template-columns:76px minmax(0,1fr) 70px;
+  align-items:center;
+  gap:20px;
+  padding:12px 4px;
+  border-bottom:1px dotted var(--ink-15);
+  transition:background .2s ease;
+}
+.eq-band:last-child{ border-bottom:0; }
+.eq-band:hover{ background:rgba(237,231,217,.02); }
+
+.eq-band label{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+.eq-value{
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:700;
+  color:var(--accent);
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Range slider — pencil styled */
+input[type="range"].band-slider,
+.preamp-box input[type="range"]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  height:4px;
+  background:var(--paper-deep);
+  border:1px solid var(--hair);
+  border-radius:1px;
+  cursor:pointer;
+  outline:none;
+  transition:border-color .2s ease;
+}
+input[type="range"].band-slider:hover,
+.preamp-box input[type="range"]:hover{
+  border-color:var(--hair-strong);
+}
+input[type="range"].band-slider:focus,
+.preamp-box input[type="range"]:focus{
+  border-color:var(--accent);
+}
+
+input[type="range"].band-slider::-webkit-slider-thumb,
+.preamp-box input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:16px;
+  height:16px;
+  background:var(--accent);
+  border:1px solid var(--paper);
+  border-radius:1px;
+  cursor:grab;
+  transition:background .15s ease, transform .15s ease;
+}
+input[type="range"].band-slider::-webkit-slider-thumb:hover,
+.preamp-box input[type="range"]::-webkit-slider-thumb:hover{
+  background:var(--accent-lo);
+  transform:scale(1.08);
+}
+input[type="range"].band-slider::-webkit-slider-thumb:active,
+.preamp-box input[type="range"]::-webkit-slider-thumb:active{
+  cursor:grabbing;
+  transform:scale(1.14);
+}
+
+input[type="range"].band-slider::-moz-range-thumb,
+.preamp-box input[type="range"]::-moz-range-thumb{
+  width:16px;
+  height:16px;
+  background:var(--accent);
+  border:1px solid var(--paper);
+  border-radius:1px;
+  cursor:grab;
+}
+input[type="range"].band-slider::-moz-range-thumb:active,
+.preamp-box input[type="range"]::-moz-range-thumb:active{
+  cursor:grabbing;
+}
+
+/* Preamp row */
+.preamp-box{
+  display:flex;
+  align-items:center;
+  gap:22px;
+  padding:18px 20px 16px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  margin-top:6px;
+}
+.preamp-box > div{ flex:1; }
+.preamp-box label{
+  display:block;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin-bottom:10px;
+}
+.preamp-box span{
+  font-family:var(--mono);
+  font-size:1rem;
+  font-weight:700;
+  color:var(--accent);
+  min-width:80px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ============================================================
+   WORKSPACE — flow left, console right
+   ============================================================ */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 400px;
+  gap:56px;
+  padding:32px 0 40px;
+  align-items:start;
+}
+
+/* ------------------- FLOW (left) ------------------- */
+.flow{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.plate{
+  display:grid;
+  grid-template-columns:56px minmax(0, 1fr);
+  gap:0;
+  position:relative;
+}
+.plate__num{
+  font-family:var(--serif);
+  font-size:2rem;
+  font-weight:400;
+  font-style:italic;
+  line-height:1;
+  color:var(--ink-45);
+  padding-top:36px;
+  position:relative;
+  transition:color .25s ease;
+}
+.plate__num::after{
+  content:"";
+  position:absolute;
+  top:74px;
+  left:8px;
+  right:18px;
+  height:1px;
+  background:var(--hair);
+}
+.plate:hover .plate__num{ color:var(--accent); }
+
+.plate__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:30px 28px 26px;
+  transition:border-color .25s ease;
+  overflow:hidden;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.05), transparent 55%),
+    var(--paper-raise);
+}
+.plate__body::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body:hover{ border-color:var(--hair-strong); }
+.plate__body:hover::before,
+.plate__body:hover::after{ border-color:var(--accent); }
+
+/* Field label */
+.field-label{
+  display:block;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  color:var(--ink-45);
+  margin-bottom:10px;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+}
+.field-spacer{ margin-top:18px; }
+
+/* Input group */
+.input-group{
+  display:flex;
+  gap:0;
+  align-items:stretch;
+}
+
+.path-box{
+  flex:1;
+  padding:15px 18px;
+  border:1px solid var(--hair);
+  border-right:0;
+  border-radius:var(--r) 0 0 var(--r);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:500;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  min-width:0;
+}
+.path-box::placeholder{
+  color:var(--ink-45);
+  font-family:var(--sans);
+  font-size:.875rem;
+  font-weight:400;
+}
+.path-box:hover{ border-color:var(--hair-strong); }
+.path-box:focus{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+  z-index:1;
+}
+.path-box[readonly]{
+  cursor:default;
+  color:var(--ink-70);
+}
+
+.browse-btn{
+  padding:15px 22px;
+  border:1px solid var(--hair-strong);
+  border-radius:0 var(--r) var(--r) 0;
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, color .2s ease, border-color .2s ease;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.browse-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+.browse-btn:active{ transform:translateY(1px); }
+
+/* Hide the file inputs */
+input[type="file"]{
+  position:absolute;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* ------------------- CONSOLE (right, sticky) ------------------- */
+.console{
+  position:sticky;
+  top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.console__head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--hair-strong);
+  margin-bottom:18px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.console__head span:last-child{ color:var(--ink); }
+.console__head .live-dot{
+  display:inline-block;
+  width:7px; height:7px;
+  border-radius:1px;
+  background:var(--stamp);
+  margin-right:8px;
+  animation:pulseDot 2.2s ease-in-out infinite;
+  vertical-align:middle;
+}
+
+.console__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:26px 24px 22px;
+  overflow:hidden;
+}
+.console__body::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body:hover{ border-color:var(--hair-strong); }
+.console__body:hover::before,
+.console__body:hover::after{ border-color:var(--accent); }
+
+/* Action row */
+.action-row{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-bottom:22px;
+}
+
+#convertBtn{
+  padding:18px 28px;
+  border:1px solid transparent;
+  border-radius:var(--r);
+  background:var(--accent);
+  color:var(--paper);
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, transform .08s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+  width:100%;
+}
+#convertBtn:hover{ background:var(--accent-lo); }
+#convertBtn:active{
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+}
+
+#resetBtn{
+  padding:15px 24px;
+  border:1px solid var(--hair-strong);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, color .2s ease, border-color .2s ease;
+  width:100%;
+}
+#resetBtn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-raise);
+}
+
+/* Log */
+#log{
+  padding:18px;
+  max-height:340px;
+  min-height:120px;
+  overflow-y:auto;
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:500;
+  line-height:1.75;
+  color:var(--accent);
+  white-space:pre-wrap;
+  word-break:break-all;
+  background:#0F0E0D;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  box-shadow:
+    inset 0 1px 0 rgba(0,0,0,.5),
+    inset 0 -1px 0 rgba(237,231,217,.04);
+  margin:0;
+}
+#log::-webkit-scrollbar{ width:6px; }
+#log::-webkit-scrollbar-track{ background:transparent; }
+#log::-webkit-scrollbar-thumb{
+  background:var(--hair-strong);
+  border-radius:2px;
+}
+
+/* ============================================================
+   COLOPHON
+   ============================================================ */
+.colophon{
+  margin-top:80px;
+  padding:26px 0 64px;
+  border-top:3px double var(--ink-25);
+}
+.colophon__inner{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:24px;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.colophon__inner span:first-child{ color:var(--ink); }
+.colophon__inner span:last-child{ color:var(--accent); }
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+.back-btn:focus-visible,
+.runhead__nav a:focus-visible,
+#convertBtn:focus-visible,
+#resetBtn:focus-visible,
+.browse-btn:focus-visible,
+.path-box:focus-visible{
+  outline:1px solid var(--accent);
+  outline-offset:3px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .workspace{ grid-template-columns:minmax(0,1fr) 340px; gap:40px; }
+}
+
+@media (max-width:1000px){
+  .titleblock{ grid-template-columns:1fr; gap:32px; padding:44px 0 32px; }
+  .titleblock__spec{
+    border-left:0;
+    padding-left:0;
+    padding-top:22px;
+    border-top:1px solid var(--hair);
+  }
+  .deco-ring,
+  .deco-ring-inner,
+  .deco-dots,
+  .deco-line,
+  .deco-line-v{ display:none; }
+  .workspace{
+    grid-template-columns:1fr;
+    gap:32px;
+    padding:24px 0 24px;
+  }
+  .console{ position:static; }
+}
+
+@media (max-width:700px){
+  body{ font-size:16px; }
+  .sheet{ padding:0 18px; }
+  .runhead__top{ gap:12px; }
+  .runhead__nav a{ font-size:.6875rem; padding:9px 12px 8px; }
+  .back-btn{ font-size:.6875rem; padding:9px 14px 8px; }
+  .runhead__folios{ font-size:.6875rem; }
+
+  .titleblock h1{ font-size:clamp(2.25rem, 8vw, 3.25rem); }
+  .deck{ font-size:1rem; }
+
+  .plate{ grid-template-columns:1fr; }
+  .plate__num{
+    font-size:1.5rem;
+    padding-top:0;
+    padding-bottom:8px;
+  }
+  .plate__num::after{ display:none; }
+
+  .plate__body{ padding:24px 18px 20px; }
+  .console__body{ padding:22px 18px 20px; }
+
+  .eq-plate{ padding:22px 16px 18px; }
+  .eq-band{
+    grid-template-columns:56px minmax(0,1fr) 52px;
+    gap:12px;
+    padding:10px 2px;
+  }
+  .eq-band label{ font-size:.6875rem; letter-spacing:.1em; }
+  .eq-value{ font-size:.8125rem; }
+
+  .preamp-box{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+  }
+  .preamp-box span{ text-align:left; }
+
+  .input-group{ flex-direction:column; }
+  .path-box{
+    border-right:1px solid var(--hair);
+    border-bottom:0;
+    border-radius:var(--r) var(--r) 0 0;
+  }
+  .browse-btn{
+    border-radius:0 0 var(--r) var(--r);
+    padding:13px 20px;
+  }
+
+  .orb{ display:none; }
+  .colophon__inner{ font-size:.6875rem; letter-spacing:.14em; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+}
+</style>
 </head>
 <body>
 
-<div class="content-wrapper">
-    <div class="orb orb-1" aria-hidden="true"></div>
-    <div class="orb orb-2" aria-hidden="true"></div>
-    <div class="orb orb-3" aria-hidden="true"></div>
+<div class="top-accent"></div>
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
 
-    <div class="page-top">
+<div class="sheet">
+  <div class="sheet__inner">
+
+    <!-- ── RUNNING HEAD ──────────────────────────────────────── -->
+    <header class="runhead">
+      <div class="runhead__top">
         <a class="back-btn" href="index.html"><i class="fas fa-arrow-left"></i> Back</a>
-        <nav class="mini-nav">
-            <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
-            <a href="convert.html" class="active"><i class="fas fa-sliders-h"></i>EQ Studio</a>
-            <a href="vidcom.html"><i class="fas fa-film"></i>Compressor</a>
-            <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
-        </nav>
-    </div>
 
-    <section class="page-hero">
-        <div class="deco deco-ring" aria-hidden="true"></div>
-        <div class="deco deco-ring-inner" aria-hidden="true"></div>
-        <div class="deco deco-line" aria-hidden="true"></div>
-        <div class="deco deco-dots" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
+        <div class="runhead__folios">
+          <span class="runhead__folio"><strong>Plate 05</strong> · Marshell-EQ</span>
+          <span class="runhead__folio">TPG Service v4</span>
         </div>
-        <div class="page-badge"><span class="pulse-dot"></span> Audio Processor</div>
-        <h1>Marshall <span class="grad">EQ Studio</span></h1>
-        <h4>TPG Service v3</h4>
-        <p class="sub">13-Band Batch Processor optimized for Marshall Major IV. Shape your sound with precision.</p>
+
+        <nav class="runhead__nav">
+  <a href="downloader.html"><i class="fas fa-download"></i>Video Downloader</a>
+  <a href="pdf.html"><i class="fas fa-code"></i>HTML to PDF</a>
+  <a href="vidcom.html"><i class="fas fa-film"></i>Video Compressor</a>
+  <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+  <a href="convert.html" class="active"><i class="fas fa-sync-alt"></i>Marshell-EQ</a>
+  <a href="ig.html"><i class="fa fa-image"></i>IG-Image</a>
+</nav>
+      </div>
+    </header>
+
+    <!-- ── TITLE BLOCK ───────────────────────────────────────── -->
+    <section class="titleblock">
+      <div class="deco deco-ring" aria-hidden="true"></div>
+      <div class="deco deco-ring-inner" aria-hidden="true"></div>
+      <div class="deco deco-line" aria-hidden="true"></div>
+      <div class="deco deco-line-v" aria-hidden="true"></div>
+      <div class="deco deco-dots" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="titleblock__main">
+        <div class="titleblock__meta">
+          <div class="page-badge"><span class="pulse-dot"></span> Audio Processor</div>
+          <h4>TPG Service v3</h4>
+        </div>
+        <h1>Marshall <em>EQ Studio</em></h1>
+        <p class="deck">13-Band Batch Processor optimized for Marshall Major IV. Shape your sound with precision.</p>
+      </div>
+
+      <aside class="titleblock__spec" aria-hidden="true">
+        <div class="spec">
+          <div class="spec__row"><span>Bands</span><span>13</span></div>
+          <div class="spec__row"><span>Range</span><span>±30 dB</span></div>
+          <div class="spec__row"><span>Target</span><span>Major IV</span></div>
+          <div class="spec__row"><span>Modes</span><span>Single · Batch</span></div>
+        </div>
+        <div class="spec__dimension">
+          <span class="spec__dimension-line"></span>
+          <span>13 × 20 Hz – 20 kHz</span>
+          <span class="spec__dimension-line"></span>
+        </div>
+      </aside>
     </section>
 
-    <div class="tool-content">
-        <div class="glass-card">
-            <div class="section-title">
-                <i class="fas fa-folder-open"></i> File Selection <span class="title-line"></span>
-            </div>
-            <label class="field-label">Select your audio file</label>
+    <!-- ── RULER ─────────────────────────────────────────────── -->
+    <div class="ruler" aria-hidden="true"></div>
+
+    <!-- ── EQ PLATE (full width) ─────────────────────────────── -->
+    <section class="eq-section">
+      <div class="eq-plate">
+        <div class="section-title">
+          <i class="fas fa-sliders-h"></i> 13-Band Equalizer <span class="title-line"></span>
+        </div>
+
+        <div class="eq-container" id="eqInterface"></div>
+
+        <div class="preamp-box">
+          <div>
+            <label for="preAmp">Gain (Pre-Amp)</label>
+            <input type="range" id="preAmp" min="-30" max="30" value="2" step="0.5">
+          </div>
+          <span id="preAmpVal">2 dB</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── WORKSPACE ─────────────────────────────────────────── -->
+    <div class="workspace">
+
+      <!-- LEFT: file flow as numbered plates -->
+      <div class="flow">
+
+        <div class="plate">
+          <div class="plate__num">01</div>
+          <section class="plate__body">
+            <label class="field-label" for="singleFilePath">Single File</label>
             <div class="input-group">
-                <input type="text" id="singleFilePath" class="path-box" placeholder="Select file path" readonly>
-                <button class="browse-btn" onclick="document.getElementById('singleFilePicker').click()">Browse</button>
+              <input type="text" id="singleFilePath" class="path-box" placeholder="Select file path" readonly>
+              <button class="browse-btn" type="button" onclick="document.getElementById('singleFilePicker').click()">Browse</button>
             </div>
             <input type="file" id="singleFilePicker" accept="audio/*,video/*">
+          </section>
+        </div>
 
-            <label class="field-label field-spacer">Select source folder (Batch)</label>
+        <div class="plate">
+          <div class="plate__num">02</div>
+          <section class="plate__body">
+            <label class="field-label" for="batchFolderPath">Source Folder (Batch)</label>
             <div class="input-group">
-                <input type="text" id="batchFolderPath" class="path-box" placeholder="Select source folder" readonly>
-                <button class="browse-btn" onclick="document.getElementById('batchFolderPicker').click()">Browse</button>
+              <input type="text" id="batchFolderPath" class="path-box" placeholder="Select source folder" readonly>
+              <button class="browse-btn" type="button" onclick="document.getElementById('batchFolderPicker').click()">Browse</button>
             </div>
             <input type="file" id="batchFolderPicker" webkitdirectory>
+          </section>
+        </div>
 
-            <label class="field-label field-spacer">Select output folder</label>
+        <div class="plate">
+          <div class="plate__num">03</div>
+          <section class="plate__body">
+            <label class="field-label" for="outputPath">Output Folder</label>
             <div class="input-group">
-                <input type="text" id="outputPath" class="path-box" placeholder="Select output folder">
-                <button class="browse-btn" onclick="document.getElementById('outputFolderPicker').click()">Browse</button>
+              <input type="text" id="outputPath" class="path-box" placeholder="Select output folder">
+              <button class="browse-btn" type="button" onclick="document.getElementById('outputFolderPicker').click()">Browse</button>
             </div>
             <input type="file" id="outputFolderPicker" webkitdirectory>
+          </section>
         </div>
 
-        <div class="glass-card">
-            <div class="section-title">
-                <i class="fas fa-sliders-h"></i> 13-Band Equalizer <span class="title-line"></span>
-            </div>
-            <div class="eq-container" id="eqInterface"></div>
-            <div class="preamp-box">
-                <div style="flex:1;">
-                    <label>Gain (Pre-Amp)</label>
-                    <input type="range" id="preAmp" min="-30" max="30" value="2" step="0.5">
-                </div>
-                <span id="preAmpVal">2 dB</span>
-            </div>
+      </div>
+
+      <!-- RIGHT: sticky console (process + reset + log) -->
+      <aside class="console">
+        <div class="console__head">
+          <span><span class="live-dot"></span>Console</span>
+          <span>Live output</span>
         </div>
 
-        <div class="glass-card">
-            <div class="section-title">
-                <i class="fas fa-play"></i> Process <span class="title-line"></span>
-            </div>
-            <div class="action-row">
-                <button id="convertBtn">Process Audio</button>
-                <button id="resetBtn">Reset Settings</button>
-            </div>
-            <pre id="log"></pre>
+        <div class="console__body">
+          <div class="action-row">
+            <button id="convertBtn" type="button">Process Audio</button>
+            <button id="resetBtn" type="button">Reset Settings</button>
+          </div>
+          <pre id="log"></pre>
         </div>
+      </aside>
+
     </div>
 
-    <footer>
-        &copy; 2026 <span>TPG Service</span>. All rights reserved.
+    <!-- ── COLOPHON ──────────────────────────────────────────── -->
+    <footer class="colophon">
+      <div class="colophon__inner">
+        <span>© 2026 TPG Service</span>
+        <span>Set in Instrument Serif · Inter · JetBrains Mono</span>
+        <span>All rights reserved</span>
+      </div>
     </footer>
+
+  </div>
 </div>
 
 <script>

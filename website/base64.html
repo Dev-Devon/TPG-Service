@@ -5,125 +5,1076 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Image Base64 Tool</title>
 <link rel="icon" type="image/x-icon" href="favicon_1.ico">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="style.css">
 
-<!-- minimal overrides for this specific tool -->
 <style>
-.text-input { resize: vertical; min-height: 120px; }
-.file-drop-zone { padding: 32px 22px; cursor: pointer; overflow: hidden; }
-.file-drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.file-drop-zone .drop-icon { font-size: 2rem; margin-bottom: 12px; transition: all 0.3s; }
-.file-drop-zone:hover .drop-icon { transform: translateY(-4px); }
-.file-drop-zone .drop-text span { color: var(--accent); font-weight: 600; }
-#preview { margin-top: 20px; padding: 14px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); display: none; flex-direction: column; align-items: center; gap: 10px; border: 1px solid var(--card-border); }
-#preview img { max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
-.file-meta { font-size: 0.8rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-#generatedImage { margin-top: 20px; text-align: center; display: none; }
-#generatedImage img { max-width: 100%; max-height: 400px; border-radius: var(--radius-sm); border: 1px solid var(--card-border); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
-.btn-primary { padding: 14px 28px; border-radius: var(--radius-xs); font-size: 0.9rem; display: inline-flex; align-items: center; gap: 10px; overflow: hidden; position: relative; }
-.btn-primary::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%); transform: translateX(-100%); transition: transform 0.6s ease; }
-.btn-primary:hover::before { transform: translateX(100%); }
-.download-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+/* ============================================================
+   TPG · DARK PENCIL · BASE64 TOOL
+   Graphite on charcoal. Restructured as a two-column workspace.
+   Every JS hook preserved.
+   ============================================================ */
+
+:root{
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
+
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
+
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
+
+  --accent:       #D4C9A8;
+  --accent-lo:    #C4B894;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+  --error:        #C97B5A;
+  --muted:        rgba(237,231,217,.45);
+
+  --r:            2px;
+  --radius:       2px;
+  --radius-sm:    2px;
+  --radius-xs:    2px;
+  --card-border:  var(--hair);
+  --card-bg:      var(--paper-raise);
+
+  --max:          1360px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  font-size:17px;
+  font-weight:500;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Graphite grain */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:.14;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+  mix-blend-mode:screen;
+}
+
+/* Vignette */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+/* Pencil top stroke */
+.top-accent{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:2px;
+  z-index:999;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(212,201,168,.10) 15%,
+    var(--accent) 50%,
+    rgba(212,201,168,.10) 85%,
+    transparent 100%);
+  background-size:200% 100%;
+  animation:accentSlide 6s linear infinite;
+  opacity:.7;
+}
+@keyframes accentSlide{
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Halftone blooms */
+.orb{
+  position:fixed;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+  opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1{ top:-120px; right:-120px; width:460px; height:460px; }
+.orb-2{ bottom:-120px; left:-120px; width:380px; height:380px; }
+.orb-3{ top:45%; right:4%; width:260px; height:260px; }
+
+/* ============================================================
+   SHEET
+   ============================================================ */
+.sheet{
+  position:relative;
+  z-index:1;
+  width:100%;
+  padding:0 40px;
+}
+.sheet__inner{
+  max-width:var(--max);
+  margin:0 auto;
+  position:relative;
+}
+/* content-wrapper kept as a passthrough so JS-parent stays valid */
+.content-wrapper{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+}
+
+/* ============================================================
+   RUNNING HEAD
+   ============================================================ */
+.runhead{
+  padding-top:24px;
+  border-bottom:1px solid var(--hair);
+}
+.runhead__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding-bottom:14px;
+  flex-wrap:wrap;
+}
+.runhead__folios{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.runhead__folio strong{
+  color:var(--ink);
+  font-weight:600;
+}
+.runhead__nav{
+  display:flex;
+  gap:0;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  overflow:hidden;
+  flex-wrap:wrap;
+}
+.runhead__nav a{
+  padding:10px 16px 9px;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  text-decoration:none;
+  border-right:1px solid var(--hair);
+  transition:background .2s ease, color .2s ease;
+  white-space:nowrap;
+}
+.runhead__nav a:last-child{ border-right:0; }
+.runhead__nav a:hover{ color:var(--ink); background:var(--paper-deep); }
+.runhead__nav a.active{
+  color:var(--paper);
+  background:var(--accent);
+}
+.runhead__nav a i{ margin-right:7px; font-size:.8rem; }
+
+.back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px 9px;
+  border-radius:var(--r);
+  border:1px solid var(--hair-strong);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  text-decoration:none;
+  cursor:pointer;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.back-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+.back-btn i{ font-size:.8rem; transition:transform .25s ease; }
+.back-btn:hover i{ transform:translateX(-3px); }
+
+/* ============================================================
+   TITLE BLOCK
+   ============================================================ */
+.titleblock{
+  padding:72px 0 44px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:64px;
+  align-items:end;
+  position:relative;
+}
+.titleblock__main{ position:relative; }
+.titleblock__meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:26px;
+  flex-wrap:wrap;
+}
+
+.page-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  padding:8px 16px 7px 14px;
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  border:1px solid var(--hair-strong);
+  color:var(--ink-70);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.page-badge .pulse-dot{
+  width:8px; height:8px;
+  border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+
+.version{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+.titleblock h1{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:clamp(2.75rem, 6.4vw, 5rem);
+  line-height:.96;
+  letter-spacing:-.024em;
+  margin-bottom:18px;
+  color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.14),
+    -1px 0 0 rgba(212,201,168,.14);
+}
+.titleblock h1 em,
+.titleblock h1 .grad{
+  font-style:italic;
+  color:var(--accent);
+  background:none;
+  -webkit-text-fill-color:currentColor;
+}
+.deck,
+.sub{
+  font-size:1.0625rem;
+  font-weight:500;
+  color:var(--ink-70);
+  max-width:52ch;
+  line-height:1.75;
+}
+
+/* Spec column */
+.titleblock__spec{
+  border-left:1px solid var(--hair);
+  padding-left:26px;
+  padding-bottom:6px;
+}
+.spec{
+  display:grid;
+  gap:0;
+  margin-bottom:22px;
+}
+.spec__row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 0;
+  border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+.spec__dimension{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:.625rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1;
+  height:1px;
+  background:var(--hair-strong);
+  position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:"";
+  position:absolute;
+  top:-3px;
+  width:1px; height:7px;
+  background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* Deco */
+.deco{ position:absolute; pointer-events:none; }
+.deco-ring{
+  width:120px; height:120px;
+  border:1px solid var(--hair-strong);
+  border-radius:50%;
+  top:-10px; right:-180px;
+  animation:spinSlow 45s linear infinite;
+}
+.deco-ring::after{
+  content:"";
+  position:absolute;
+  width:6px; height:6px;
+  background:var(--stamp);
+  border-radius:1px;
+  top:-3px; left:50%;
+  transform:translateX(-50%);
+}
+.deco-ring-inner{
+  width:78px; height:78px;
+  border:1px dashed var(--hair);
+  border-radius:50%;
+  top:15px; right:-160px;
+  animation:spinSlow 32s linear infinite reverse;
+}
+.deco-dots{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:11px;
+  top:-20px; right:-180px;
+  margin-top:160px;
+}
+.deco-dots span{
+  width:4px; height:4px;
+  border-radius:50%;
+  background:rgba(212,201,168,.45);
+}
+.deco-dots span:nth-child(3n){ background:rgba(201,123,90,.55); }
+.deco-dots span:nth-child(7){
+  width:6px; height:6px;
+  background:rgba(237,231,217,.55);
+}
+.deco-line{
+  width:70px; height:1px;
+  background:var(--hair-strong);
+  top:-40px; right:-180px;
+}
+.deco-line-v{
+  width:1px; height:60px;
+  background:var(--hair-strong);
+  bottom:-40px; right:-180px;
+}
+@keyframes spinSlow{
+  from{ transform:rotate(0deg); }
+  to  { transform:rotate(360deg); }
+}
+
+/* ============================================================
+   RULER
+   ============================================================ */
+.ruler{
+  height:12px;
+  border-top:1px solid var(--hair);
+  border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(
+    to right,
+    var(--hair-strong) 0 1px,
+    transparent 1px 16px
+  );
+  background-position:0 3px;
+  background-repeat:repeat-x;
+  background-size:auto 6px;
+}
+
+/* ============================================================
+   WORKSPACE
+   ============================================================ */
+.workspace{
+  display:grid;
+  grid-template-columns:400px minmax(0, 1fr);
+  gap:56px;
+  padding:56px 0 40px;
+  align-items:start;
+}
+
+/* Left control column: sticky on desktop */
+.controls{
+  position:sticky;
+  top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+.controls__head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--hair-strong);
+  margin-bottom:0;
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+.controls__head span:last-child{ color:var(--ink); }
+.controls__head .live-dot{
+  display:inline-block;
+  width:7px; height:7px;
+  border-radius:1px;
+  background:var(--stamp);
+  margin-right:8px;
+  animation:pulseDot 2.2s ease-in-out infinite;
+  vertical-align:middle;
+}
+
+/* Right: stage */
+.stage{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+/* ------------------- PLATES ------------------- */
+.plate{
+  position:relative;
+}
+.plate__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:28px 26px 26px;
+  transition:border-color .25s ease;
+  overflow:hidden;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.05), transparent 55%),
+    var(--paper-raise);
+}
+.plate__body::before{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body:hover{ border-color:var(--hair-strong); }
+.plate__body:hover::before,
+.plate__body:hover::after{ border-color:var(--accent); }
+
+/* Section title */
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.22em;
+  color:var(--ink);
+  margin-bottom:22px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.section-title i{
+  color:var(--accent);
+  font-size:1rem;
+}
+.section-title .title-line{
+  flex:1;
+  height:1px;
+  background:var(--hair);
+}
+
+/* ------------------- FORM ------------------- */
+.text-input{
+  width:100%;
+  padding:16px 18px;
+  border-radius:var(--r);
+  border:1px solid var(--hair);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:500;
+  line-height:1.65;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  resize:vertical;
+  min-height:120px;
+}
+.text-input::placeholder{
+  color:var(--ink-45);
+  font-family:var(--sans);
+  font-size:.9375rem;
+  font-weight:400;
+}
+.text-input:hover{ border-color:var(--hair-strong); }
+.text-input:focus{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+.text-input[readonly]{
+  cursor:default;
+}
+
+/* Select */
+.select-wrapper{ position:relative; }
+.select-wrapper::after{
+  content:"\f107";
+  font-family:"Font Awesome 6 Free";
+  font-weight:900;
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--ink-45);
+  font-size:14px;
+  pointer-events:none;
+}
+.styled-select{
+  width:100%;
+  padding:16px 44px 16px 18px;
+  border-radius:var(--r);
+  border:1px solid var(--hair);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-size:1rem;
+  font-weight:500;
+  font-family:var(--mono);
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.styled-select:hover{ border-color:var(--hair-strong); }
+.styled-select:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+.styled-select option{
+  background:var(--paper-raise);
+  color:var(--ink);
+}
+
+/* File drop */
+.file-drop-zone{
+  border:1px dashed var(--hair-strong);
+  border-radius:var(--r);
+  padding:32px 22px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .2s ease, background .2s ease;
+  position:relative;
+  overflow:hidden;
+  background:var(--paper-deep);
+}
+.file-drop-zone:hover,
+.file-drop-zone.drag-over{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+}
+.file-drop-zone input[type="file"]{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+.file-drop-zone .drop-icon{
+  font-size:2rem;
+  color:var(--ink-45);
+  margin-bottom:12px;
+  transition:color .2s ease, transform .2s ease;
+}
+.file-drop-zone:hover .drop-icon,
+.file-drop-zone.drag-over .drop-icon{
+  color:var(--accent);
+  transform:translateY(-4px);
+}
+.file-drop-zone .drop-text{
+  font-size:1rem;
+  font-weight:500;
+  color:var(--ink-70);
+}
+.file-drop-zone .drop-text span{
+  color:var(--accent);
+  font-weight:600;
+}
+.file-drop-zone .drop-hint{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin-top:8px;
+}
+
+/* Preview */
+#preview{
+  margin-top:20px;
+  padding:16px;
+  background:var(--paper-deep);
+  border-radius:var(--r);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  border:1px solid var(--hair);
+}
+#preview img{
+  max-width:100%;
+  max-height:300px;
+  border-radius:var(--r);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+  border:1px solid var(--hair);
+}
+.file-meta{
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+/* Generated image */
+#generatedImage{
+  margin-top:20px;
+  text-align:center;
+  display:none;
+}
+#generatedImage img{
+  max-width:100%;
+  max-height:400px;
+  border-radius:var(--r);
+  border:1px solid var(--hair-strong);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+}
+
+/* ------------------- BUTTONS ------------------- */
+.btn-primary{
+  padding:16px 28px;
+  border:1px solid transparent;
+  border-radius:var(--r);
+  background:var(--accent);
+  color:var(--paper);
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .2s ease, transform .08s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:11px;
+  position:relative;
+  overflow:hidden;
+}
+.btn-primary:hover{ background:var(--accent-lo); }
+.btn-primary:active{
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+}
+.btn-primary i{ font-size:.9rem; }
+
+.download-row{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-top:4px;
+}
+.download-row .btn-primary{ flex:1; }
+
+/* ============================================================
+   COLOPHON
+   ============================================================ */
+footer{
+  margin-top:80px;
+  padding:26px 0 64px;
+  border-top:3px double var(--ink-25);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:600;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  text-align:center;
+}
+footer span{ color:var(--accent); }
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+.toast-container{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-width:calc(100vw - 40px);
+}
+.toast{
+  padding:14px 20px;
+  border-radius:var(--r);
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  animation:toastIn .3s ease both;
+  border:1px solid;
+  background:var(--paper-raise);
+  color:var(--ink-70);
+}
+.toast.error{
+  border-color:rgba(201,123,90,.55);
+  color:var(--stamp);
+}
+.toast.success{
+  border-color:rgba(159,181,138,.55);
+  color:var(--success);
+}
+.toast.info{
+  border-color:var(--hair-strong);
+  color:var(--ink-70);
+}
+@keyframes toastIn{
+  from{ opacity:0; transform:translateX(24px); }
+  to  { opacity:1; transform:none; }
+}
+.toast.removing{ animation:toastOut .25s ease both; }
+@keyframes toastOut{
+  to{ opacity:0; transform:translateX(24px); }
+}
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+.back-btn:focus-visible,
+.runhead__nav a:focus-visible,
+.btn-primary:focus-visible,
+.text-input:focus-visible,
+.styled-select:focus-visible{
+  outline:1px solid var(--accent);
+  outline-offset:3px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .workspace{ grid-template-columns:340px minmax(0,1fr); gap:40px; }
+}
+
+@media (max-width:1000px){
+  .titleblock{ grid-template-columns:1fr; gap:32px; padding:44px 0 32px; }
+  .titleblock__spec{
+    border-left:0;
+    padding-left:0;
+    padding-top:22px;
+    border-top:1px solid var(--hair);
+  }
+  .deco-ring,
+  .deco-ring-inner,
+  .deco-dots,
+  .deco-line,
+  .deco-line-v{ display:none; }
+  .workspace{
+    grid-template-columns:1fr;
+    gap:32px;
+    padding:36px 0 24px;
+  }
+  .controls{ position:static; }
+}
+
+@media (max-width:700px){
+  body{ font-size:16px; }
+  .sheet{ padding:0 18px; }
+  .runhead__top{ gap:12px; }
+  .runhead__nav a{ font-size:.6875rem; padding:9px 12px 8px; }
+  .back-btn{ font-size:.6875rem; padding:9px 14px 8px; }
+  .runhead__folios{ font-size:.6875rem; }
+
+  .titleblock h1{ font-size:clamp(2.25rem, 8vw, 3.25rem); }
+  .deck, .sub{ font-size:1rem; }
+
+  .plate__body{ padding:24px 18px 22px; }
+
+  .orb{ display:none; }
+  .toast-container{
+    top:14px; right:14px; left:14px;
+    max-width:none;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+}
 </style>
 </head>
 <body>
 
 <div class="top-accent"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
-
-<div class="deco deco-ring"></div>
-<div class="deco deco-ring-inner"></div>
-<div class="deco deco-dots">
-  <span></span><span></span><span></span><span></span><span></span>
-  <span></span><span></span><span></span><span></span><span></span>
-  <span></span><span></span><span></span><span></span><span></span>
-</div>
-<div class="deco deco-line"></div>
-<div class="deco deco-line-v"></div>
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
 
 <div class="content-wrapper">
-  <div class="page-top">
-    <a class="back-btn" href="javascript:history.back()"><i class="fa fa-arrow-left"></i> Back</a>
-    <nav class="mini-nav">
-      <a href="convert.html"><i class="fas fa-sliders-h"></i>EQ Studio</a>
-      <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
-      <a href="vidcom.html"><i class="fas fa-film"></i>Compressor</a>
-      <a href="base64.html" class="active"><i class="fa fa-image"></i>Base64</a>
-    </nav>
-  </div>
+  <div class="sheet">
+    <div class="sheet__inner">
 
-  <div class="page-hero">
-    <div class="page-badge"><span class="pulse-dot"></span> BASE64 CONVERTER</div>
-    <h1>Image <span class="grad">↔ Base64</span></h1>
-    <div class="version">TPG Version v3.1</div>
-    <div class="sub">Convert images to Base64 strings or decode strings back to images.</div>
-  </div>
+      <!-- ── RUNNING HEAD ──────────────────────────────────────── -->
+      <header class="runhead">
+        <div class="runhead__top">
+          <a class="back-btn" href="javascript:history.back()"><i class="fa fa-arrow-left"></i> Back</a>
 
-  <div class="tool-content">
-    <div class="section-card">
-      <div class="section-title"><i class="fa fa-exchange"></i> Conversion Mode <div class="title-line"></div></div>
-      <div class="select-wrapper">
-        <select id="mode" class="styled-select">
-          <option value="img2base64">Image → Base64</option>
-          <option value="base642img">Base64 → Image</option>
-        </select>
-      </div>
-    </div>
+          <div class="runhead__folios">
+            <span class="runhead__folio"><strong>Plate 04</strong> · Base64</span>
+            <span class="runhead__folio">TPG v3.1</span>
+          </div>
 
-    <div class="section-card" id="uploadSection">
-      <div class="section-title"><i class="fa fa-upload"></i> Upload Image <div class="title-line"></div></div>
-      <div class="file-drop-zone" id="dropZone">
-        <input type="file" id="fileInput" accept="image/*">
-        <div class="drop-icon"><i class="fa fa-cloud-arrow-up"></i></div>
-        <div class="drop-text">Drop file or <span>click here</span></div>
-        <div class="drop-hint">PNG, JPG, WEBP, SVG supported</div>
-      </div>
-      <div id="preview">
-        <img id="previewImg" alt="Preview">
-        <div class="file-meta" id="fileMeta"></div>
-      </div>
-    </div>
-
-    <div class="section-card" id="base64Section" style="display:none;">
-      <div class="section-title"><i class="fa fa-code"></i> Paste Base64 String <div class="title-line"></div></div>
-      <textarea id="base64Input" class="text-input" placeholder="Paste your data:image/png;base64 string here..."></textarea>
-      <div class="download-row" style="margin-top:12px;">
-        <button class="btn-primary" onclick="convertBase64ToImage()"><i class="fa fa-wand-magic-sparkles"></i> Generate Image</button>
-      </div>
-      <div id="generatedImage">
-        <img id="resultImg" alt="Generated Result">
-        <div style="margin-top:16px; display:flex; justify-content:center;">
-          <button class="btn-primary" onclick="downloadImage()"><i class="fa fa-download"></i> Download Image</button>
+          <nav class="runhead__nav">
+  <a href="downloader.html"><i class="fas fa-download"></i>Video Downloader</a>
+  <a href="pdf.html"><i class="fas fa-code"></i>HTML to PDF</a>
+  <a href="vidcom.html"><i class="fas fa-film"></i>Video Compressor</a>
+  <a href="base64.html" class="active"><i class="fa fa-image"></i>Base64</a>
+  <a href="convert.html"><i class="fas fa-sync-alt"></i>Marshell-EQ</a>
+  <a href="ig.html"><i class="fa fa-image"></i>IG-Image</a>
+</nav>
         </div>
-      </div>
-    </div>
+      </header>
 
-    <div class="section-card" id="formatSection">
-      <div class="section-title"><i class="fa fa-sliders"></i> Output Format <div class="title-line"></div></div>
-      <div class="select-wrapper">
-        <select id="format" class="styled-select">
-          <option value="original">Original Format</option>
-          <option value="png">PNG (Lossless)</option>
-          <option value="jpeg">JPEG (Smaller Size)</option>
-          <option value="webp">WEBP (Modern Web)</option>
-        </select>
-      </div>
-    </div>
+      <!-- ── TITLE BLOCK ───────────────────────────────────────── -->
+      <section class="titleblock">
+        <div class="deco deco-ring" aria-hidden="true"></div>
+        <div class="deco deco-ring-inner" aria-hidden="true"></div>
+        <div class="deco deco-line" aria-hidden="true"></div>
+        <div class="deco deco-line-v" aria-hidden="true"></div>
+        <div class="deco deco-dots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
 
-    <div class="section-card" id="outputSection">
-      <div class="section-title"><i class="fa fa-file-code"></i> Base64 Result <div class="title-line"></div></div>
-      <textarea id="output" class="text-input" readonly placeholder="Your Base64 string will appear here..."></textarea>
-      <div class="download-row" style="margin-top:12px;">
-        <button class="btn-primary" onclick="copyText()"><i class="fa fa-copy"></i> Copy to Clipboard</button>
+        <div class="titleblock__main">
+          <div class="titleblock__meta">
+            <div class="page-badge"><span class="pulse-dot"></span> Base64 Converter</div>
+            <span class="version">TPG Version v4</span>
+          </div>
+          <h1>Image <em>↔ Base64</em></h1>
+          <p class="deck">Convert images to Base64 strings or decode strings back to images.</p>
+        </div>
+
+        <aside class="titleblock__spec" aria-hidden="true">
+          <div class="spec">
+            <div class="spec__row"><span>Input</span><span>Image / String</span></div>
+            <div class="spec__row"><span>Output</span><span>String / Image</span></div>
+            <div class="spec__row"><span>Formats</span><span>PNG · JPG · WEBP</span></div>
+            <div class="spec__row"><span>Storage</span><span>Local</span></div>
+          </div>
+          <div class="spec__dimension">
+            <span class="spec__dimension-line"></span>
+            <span>Client-side · No upload</span>
+            <span class="spec__dimension-line"></span>
+          </div>
+        </aside>
+      </section>
+
+      <!-- ── RULER ─────────────────────────────────────────────── -->
+      <div class="ruler" aria-hidden="true"></div>
+
+      <!-- ── WORKSPACE ─────────────────────────────────────────── -->
+      <div class="workspace">
+
+        <!-- LEFT: mode + format controls (sticky) -->
+        <aside class="controls">
+          <div class="controls__head">
+            <span><span class="live-dot"></span>Controls</span>
+            <span>Configure</span>
+          </div>
+
+          <div class="plate">
+            <div class="plate__body">
+              <div class="section-title"><i class="fa fa-exchange"></i> Conversion Mode <div class="title-line"></div></div>
+              <div class="select-wrapper">
+                <select id="mode" class="styled-select">
+                  <option value="img2base64">Image → Base64</option>
+                  <option value="base642img">Base64 → Image</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="plate" id="formatSection">
+            <div class="plate__body">
+              <div class="section-title"><i class="fa fa-sliders"></i> Output Format <div class="title-line"></div></div>
+              <div class="select-wrapper">
+                <select id="format" class="styled-select">
+                  <option value="original">Original Format</option>
+                  <option value="png">PNG (Lossless)</option>
+                  <option value="jpeg">JPEG (Smaller Size)</option>
+                  <option value="webp">WEBP (Modern Web)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- RIGHT: stage — upload / base64 input / output based on mode -->
+        <main class="stage">
+
+          <div class="plate" id="uploadSection">
+            <div class="plate__body">
+              <div class="section-title"><i class="fa fa-upload"></i> Upload Image <div class="title-line"></div></div>
+              <div class="file-drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept="image/*">
+                <div class="drop-icon"><i class="fa fa-cloud-arrow-up"></i></div>
+                <div class="drop-text">Drop file or <span>click here</span></div>
+                <div class="drop-hint">PNG, JPG, WEBP, SVG supported</div>
+              </div>
+              <div id="preview">
+                <img id="previewImg" alt="Preview">
+                <div class="file-meta" id="fileMeta"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="plate" id="base64Section" style="display:none;">
+            <div class="plate__body">
+              <div class="section-title"><i class="fa fa-code"></i> Paste Base64 String <div class="title-line"></div></div>
+              <textarea id="base64Input" class="text-input" placeholder="Paste your data:image/png;base64 string here..."></textarea>
+              <div class="download-row" style="margin-top:12px;">
+                <button class="btn-primary" onclick="convertBase64ToImage()"><i class="fa fa-wand-magic-sparkles"></i> Generate Image</button>
+              </div>
+              <div id="generatedImage">
+                <img id="resultImg" alt="Generated Result">
+                <div style="margin-top:16px; display:flex; justify-content:center;">
+                  <button class="btn-primary" onclick="downloadImage()"><i class="fa fa-download"></i> Download Image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="plate" id="outputSection">
+            <div class="plate__body">
+              <div class="section-title"><i class="fa fa-file-code"></i> Base64 Result <div class="title-line"></div></div>
+              <textarea id="output" class="text-input" readonly placeholder="Your Base64 string will appear here..."></textarea>
+              <div class="download-row" style="margin-top:12px;">
+                <button class="btn-primary" onclick="copyText()"><i class="fa fa-copy"></i> Copy to Clipboard</button>
+              </div>
+            </div>
+          </div>
+
+        </main>
       </div>
+
+      <!-- ── COLOPHON ──────────────────────────────────────────── -->
+      <footer>
+        Built locally. Works fine no excuses. <span>Enjoy the TPG Service.</span>
+      </footer>
+
     </div>
   </div>
-
-  <footer>Built locally. Works fine no excuses. <span>Enjoy the TPG Service.</span></footer>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
@@ -356,7 +1307,7 @@ function notify(msg, type) {
   }, 3000);
 }
 
-document.querySelectorAll('.section-card').forEach(function(card) {
+document.querySelectorAll('.section-card, .plate__body').forEach(function(card) {
   card.addEventListener('mousemove', function(e) {
     var rect = card.getBoundingClientRect();
     var x = e.clientX - rect.left;

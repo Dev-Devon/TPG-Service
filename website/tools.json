@@ -1,0 +1,46 @@
+{
+  "tools": [
+    {
+      "id": "downloader",
+      "file": "downloader.html",
+      "label": "Video Downloader",
+      "icon": "fas fa-download",
+      "desc": ""
+    },
+    {
+      "id": "html-pdf",
+      "file": "pdf.html",
+      "label": "HTML to PDF",
+      "icon": "fas fa-code",
+      "desc": "Convert HTML file or code to PDF file. Uses a advance method to break pages properly."
+    },
+    {
+      "id": "vidcom",
+      "file": "vidcom.html",
+      "label": "Video Compressor",
+      "icon": "fas fa-film",
+      "desc": ""
+    },
+    {
+      "id": "image to base64",
+      "file": "base64.html",
+      "label": "Base64",
+      "icon": "fa fa-image",
+      "desc": ""
+    },
+    {
+      "id": "convert",
+      "file": "convert.html",
+      "label": "Marshell-EQ",
+      "icon": "fas fa-sync-alt",
+      "desc": ""
+    },
+    {
+      "id": "ig-image",
+      "file": "ig.html",
+      "label": "IG-Image",
+      "icon": "fa fa-image",
+      "desc": "Use to convert normal images to Instagram ready images."
+    }
+  ]
+}

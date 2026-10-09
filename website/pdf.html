@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PageWright | TPG Tools</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* ============================================================
+   TPG · DARK PENCIL · PAGEWRIGHT
+   Graphite on charcoal. Editor left, sticky preview right.
+   ============================================================ */
+
+:root{
+  --paper:        #1A1917;
+  --paper-deep:   #131211;
+  --paper-raise:  #232120;
+  --paper-shade:  #2B2825;
+
+  --ink:          #EDE7D9;
+  --ink-70:       rgba(237,231,217,.78);
+  --ink-45:       rgba(237,231,217,.55);
+  --ink-25:       rgba(237,231,217,.30);
+  --ink-15:       rgba(237,231,217,.16);
+
+  --hair:         rgba(237,231,217,.14);
+  --hair-strong:  rgba(237,231,217,.32);
+
+  --accent:       #D4C9A8;
+  --accent-lo:    #C4B894;
+  --accent-glow:  rgba(212,201,168,.18);
+  --stamp:        #C97B5A;
+  --success:      #9FB58A;
+  --error:        #E08770;
+  --warning:      #C99A5A;
+  --info:         #A8B29E;
+
+  --r:            2px;
+  --max:          1420px;
+
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+html { -webkit-text-size-adjust:100%; }
+
+body{
+  font-family:var(--sans);
+  font-size:17px;
+  font-weight:500;
+  line-height:1.7;
+  color:var(--ink);
+  background:var(--paper);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Graphite grain */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; opacity:.14; pointer-events:none;
+  mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+  background-size:180px 180px;
+}
+
+/* Vignette */
+body::after{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(ellipse 95% 75% at 50% 25%,
+    transparent 0%, rgba(0,0,0,.38) 100%);
+}
+
+/* Halftone blooms */
+.orb{
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0; opacity:.5;
+  background-image:radial-gradient(circle, rgba(212,201,168,.24) 1.1px, transparent 1.1px);
+  background-size:8px 8px;
+  -webkit-mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 0%, transparent 68%);
+}
+.orb-1{ top:-120px; right:-120px; width:460px; height:460px; }
+.orb-2{ bottom:-120px; left:-120px; width:380px; height:380px; }
+.orb-3{ top:45%; right:4%; width:260px; height:260px; }
+
+/* ── SHEET ── */
+.sheet{ position:relative; z-index:1; width:100%; padding:0 40px; }
+.sheet__inner{ max-width:var(--max); margin:0 auto; position:relative; }
+
+/* ── RUNHEAD ── */
+.runhead{ padding-top:24px; border-bottom:1px solid var(--hair); }
+.runhead__top{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:20px; padding-bottom:14px; flex-wrap:wrap;
+}
+.runhead__folios{
+  display:flex; align-items:center; gap:20px;
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.runhead__folio strong{ color:var(--ink); font-weight:600; }
+.runhead__nav{
+  display:flex; gap:0; border:1px solid var(--hair); border-radius:var(--r);
+  background:var(--paper-raise); overflow:hidden; flex-wrap:wrap;
+}
+.runhead__nav a{
+  padding:10px 16px 9px;
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-45); text-decoration:none;
+  border-right:1px solid var(--hair);
+  transition:background .2s ease, color .2s ease; white-space:nowrap;
+}
+.runhead__nav a:last-child{ border-right:0; }
+.runhead__nav a:hover{ color:var(--ink); background:var(--paper-deep); }
+.runhead__nav a.active{ color:var(--paper); background:var(--accent); }
+.runhead__nav a i{ margin-right:7px; font-size:.8rem; }
+
+.back-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 18px 9px;
+  border-radius:var(--r); border:1px solid var(--hair-strong);
+  background:var(--paper-raise); color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  text-decoration:none; cursor:pointer;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.back-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--paper-deep); }
+.back-btn i{ font-size:.8rem; transition:transform .25s ease; }
+.back-btn:hover i{ transform:translateX(-3px); }
+
+/* ── TITLE BLOCK ── */
+.titleblock{
+  padding:72px 0 44px;
+  display:grid; grid-template-columns:minmax(0,1fr) 300px;
+  gap:64px; align-items:end;
+}
+.titleblock__meta{
+  display:flex; align-items:center; gap:16px;
+  margin-bottom:26px; flex-wrap:wrap;
+}
+.page-badge{
+  display:inline-flex; align-items:center; gap:11px;
+  padding:8px 16px 7px 14px;
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  border:1px solid var(--hair-strong);
+  color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.page-badge .pulse-dot{
+  width:8px; height:8px; border-radius:1px;
+  background:var(--stamp);
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.28; transform:scale(.7); }
+}
+.version{
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.titleblock h1{
+  font-family:var(--serif); font-weight:400;
+  font-size:clamp(2.75rem, 6.4vw, 5rem);
+  line-height:.96; letter-spacing:-.024em;
+  margin-bottom:18px; color:var(--ink);
+  text-shadow:
+     1px 0 0 rgba(201,123,90,.14),
+    -1px 0 0 rgba(212,201,168,.14);
+}
+.titleblock h1 em{ font-style:italic; color:var(--accent); }
+.deck{ font-size:1.0625rem; font-weight:500; color:var(--ink-70); max-width:52ch; line-height:1.75; }
+
+.titleblock__spec{
+  border-left:1px solid var(--hair);
+  padding-left:26px; padding-bottom:6px;
+}
+.spec{ display:grid; gap:0; margin-bottom:22px; }
+.spec__row{
+  display:flex; align-items:baseline; justify-content:space-between; gap:14px;
+  padding:10px 0; border-bottom:1px dotted var(--ink-15);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.spec__row span:first-child{ color:var(--ink-45); }
+.spec__row span:last-child { color:var(--ink); }
+.spec__dimension{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:.625rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ink-45);
+}
+.spec__dimension-line{
+  flex:1; height:1px; background:var(--hair-strong); position:relative;
+}
+.spec__dimension-line::before,
+.spec__dimension-line::after{
+  content:""; position:absolute; top:-3px;
+  width:1px; height:7px; background:var(--hair-strong);
+}
+.spec__dimension-line::before{ left:0; }
+.spec__dimension-line::after { right:0; }
+
+/* ── RULER ── */
+.ruler{
+  height:12px; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+  background-image:repeating-linear-gradient(to right, var(--hair-strong) 0 1px, transparent 1px 16px);
+  background-position:0 3px; background-repeat:repeat-x; background-size:auto 6px;
+}
+
+/* ── WORKSPACE ── */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 560px;
+  gap:48px;
+  padding:48px 0 40px;
+  align-items:start;
+}
+
+.flow{ display:flex; flex-direction:column; gap:20px; }
+
+.plate{
+  display:grid; grid-template-columns:56px minmax(0, 1fr);
+  gap:0; position:relative;
+}
+.plate__num{
+  font-family:var(--serif);
+  font-size:2rem; font-weight:400; font-style:italic; line-height:1;
+  color:var(--ink-45); padding-top:36px; position:relative;
+  transition:color .25s ease;
+}
+.plate__num::after{
+  content:""; position:absolute; top:74px; left:8px; right:18px;
+  height:1px; background:var(--hair);
+}
+.plate:hover .plate__num{ color:var(--accent); }
+
+.plate__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:28px 26px 26px;
+  overflow:hidden;
+  transition:border-color .25s ease;
+  background:
+    radial-gradient(520px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,201,168,.05), transparent 55%),
+    var(--paper-raise);
+}
+.plate__body::before{
+  content:""; position:absolute; width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body::after{
+  content:""; position:absolute; width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.plate__body:hover{ border-color:var(--hair-strong); }
+.plate__body:hover::before,
+.plate__body:hover::after{ border-color:var(--accent); }
+
+.section-title{
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--mono); font-size:.8125rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink);
+  margin-bottom:20px; padding-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.section-title i{ color:var(--accent); font-size:1rem; }
+.section-title .title-line{ flex:1; height:1px; background:var(--hair); }
+.section-title .count-badge{
+  font-family:var(--mono); font-size:.6875rem; font-weight:700;
+  padding:3px 8px 2px;
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  border:1px solid var(--hair);
+  color:var(--ink-45);
+  letter-spacing:.14em;
+}
+
+/* ── CONSOLE ── */
+.console{ position:sticky; top:20px; display:flex; flex-direction:column; gap:0; }
+.console__head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:14px; padding-bottom:12px;
+  border-bottom:1px solid var(--hair-strong);
+  margin-bottom:14px;
+  font-family:var(--mono); font-size:.75rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-45);
+}
+.console__head span:last-child{ color:var(--ink); }
+.console__head .live-dot{
+  display:inline-block; width:7px; height:7px; border-radius:1px;
+  background:var(--stamp); margin-right:8px;
+  animation:pulseDot 2.2s ease-in-out infinite;
+  vertical-align:middle;
+}
+
+.console__body{
+  position:relative;
+  background:var(--paper-raise);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  padding:20px 20px 18px;
+  overflow:hidden;
+}
+.console__body::before{
+  content:""; position:absolute; width:14px; height:14px;
+  top:-1px; left:-1px;
+  border-top:1px solid var(--hair-strong);
+  border-left:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body::after{
+  content:""; position:absolute; width:14px; height:14px;
+  bottom:-1px; right:-1px;
+  border-bottom:1px solid var(--hair-strong);
+  border-right:1px solid var(--hair-strong);
+  transition:border-color .25s ease;
+}
+.console__body:hover{ border-color:var(--hair-strong); }
+.console__body:hover::before,
+.console__body:hover::after{ border-color:var(--accent); }
+
+/* ── EDITOR ── */
+.editor-tabs{
+  display:flex; gap:0; margin-bottom:14px;
+  border-bottom:1px solid var(--hair);
+}
+.editor-tab{
+  padding:10px 18px 9px;
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-45);
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  position:relative;
+  transition:color .2s ease;
+}
+.editor-tab::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:transparent;
+  transition:background .2s ease;
+}
+.editor-tab:hover{ color:var(--ink); }
+.editor-tab.active{ color:var(--accent); }
+.editor-tab.active::after{ background:var(--accent); }
+
+.editor-area{ display:none; }
+.editor-area.active{ display:block; }
+
+.editor-area textarea{
+  width:100%;
+  min-height:420px;
+  padding:16px 18px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:.8125rem;
+  font-weight:500;
+  line-height:1.7;
+  resize:vertical;
+  outline:none;
+  tab-size:2;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.editor-area textarea::placeholder{ color:var(--ink-25); }
+.editor-area textarea:hover{ border-color:var(--hair-strong); }
+.editor-area textarea:focus{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+
+/* ── SETTINGS ── */
+.settings-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:16px 20px;
+}
+.field{ display:flex; flex-direction:column; gap:8px; }
+.field--full{ grid-column:1 / -1; }
+.field label{
+  font-family:var(--mono); font-size:.6875rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-45);
+}
+.field select,
+.field input[type="text"],
+.field input[type="number"]{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:.875rem;
+  font-weight:500;
+  appearance:none;
+  -webkit-appearance:none;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.field select:hover,
+.field input:hover{ border-color:var(--hair-strong); }
+.field select:focus,
+.field input:focus{
+  border-color:var(--accent);
+  background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+.field select{
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-45) 50%),
+    linear-gradient(135deg, var(--ink-45) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 13px) calc(50% - 3px);
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+  padding-right:36px;
+  cursor:pointer;
+}
+.field select option{ background:var(--paper-raise); color:var(--ink); }
+.field input[type="number"]{ cursor:text; }
+
+.margin-group{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:10px;
+}
+.margin-group .field label{
+  text-align:center; font-size:.625rem;
+}
+
+/* ── PREVIEW ── */
+.preview-toolbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  padding:8px 12px;
+  margin-bottom:12px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  font-family:var(--mono); font-size:.6875rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-45);
+}
+.zoom-controls{
+  display:flex; align-items:center; gap:8px;
+}
+.zoom-controls button{
+  width:26px; height:26px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  cursor:pointer;
+  display:grid; place-items:center;
+  font-family:var(--mono); font-size:.8125rem;
+  transition:border-color .2s ease, color .2s ease, background .2s ease;
+}
+.zoom-controls button:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+#zoomLevel{
+  min-width:52px; text-align:center;
+  color:var(--ink-70);
+  font-variant-numeric:tabular-nums;
+}
+
+.preview-scroll{
+  height:560px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:20px 14px 24px;
+  background:var(--paper-deep);
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  display:flex; flex-direction:column; align-items:center;
+  gap:28px;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(212,201,168,.03), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(212,201,168,.03), transparent 40%);
+}
+.preview-scroll::-webkit-scrollbar{ width:8px; }
+.preview-scroll::-webkit-scrollbar-track{ background:transparent; }
+.preview-scroll::-webkit-scrollbar-thumb{
+  background:var(--hair-strong);
+  border-radius:2px;
+}
+
+.page-sheet{
+  background:#FFFFFF;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.6),
+    0 8px 24px rgba(0,0,0,.45);
+  position:relative;
+  flex-shrink:0;
+}
+.page-sheet__margin{
+  position:absolute;
+  border:1px dashed rgba(0,0,0,.12);
+  pointer-events:none;
+}
+.page-sheet__number{
+  position:absolute;
+  bottom:-22px;
+  left:50%;
+  transform:translateX(-50%);
+  font-family:var(--mono);
+  font-size:.625rem;
+  letter-spacing:.18em;
+  color:var(--ink-45);
+}
+.page-sheet__content{
+  position:relative;
+  overflow:hidden;
+}
+.page-sheet__content iframe{
+  border:none;
+  display:block;
+  position:absolute;
+  top:0; left:0;
+}
+
+.page-empty{
+  background:var(--paper);
+  border:1px dashed var(--hair-strong);
+  border-radius:var(--r);
+  padding:60px 24px;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--ink-25);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+  text-align:center;
+  width:100%;
+}
+
+/* ── ACTIONS ── */
+.console-actions{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid var(--hair);
+}
+
+.btn{
+  padding:12px 18px;
+  border:1px solid var(--hair-strong);
+  border-radius:var(--r);
+  background:var(--paper-raise);
+  color:var(--ink-70);
+  font-family:var(--mono); font-size:.75rem; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:9px;
+  transition:background .2s ease, color .2s ease, border-color .2s ease, transform .08s ease, opacity .2s ease;
+}
+.btn:hover:not(:disabled){
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--paper-deep);
+}
+.btn:active:not(:disabled){ transform:translateY(1px); }
+.btn:disabled{ opacity:.35; cursor:not-allowed; }
+
+.btn--primary{
+  background:var(--accent);
+  color:var(--paper);
+  border-color:var(--accent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+  flex:1;
+  min-width:140px;
+}
+.btn--primary:hover:not(:disabled){
+  background:var(--accent-lo);
+  border-color:var(--accent-lo);
+  color:var(--paper);
+}
+.btn--primary:active:not(:disabled){
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);
+}
+.btn--secondary{ color:var(--ink-70); }
+.btn--danger{
+  color:var(--error);
+  border-color:var(--hair-strong);
+}
+.btn--danger:hover:not(:disabled){
+  border-color:var(--error);
+  background:rgba(224,135,112,.08);
+  color:var(--error);
+}
+
+.status-msg{
+  font-family:var(--mono); font-size:.6875rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-45);
+  margin-left:auto;
+  text-align:right;
+  flex:1 0 auto;
+  min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.status-msg--ok{ color:var(--success); }
+.status-msg--warn{ color:var(--warning); }
+.status-msg--err{ color:var(--error); }
+
+/* ── DIAGNOSTICS ── */
+.diag-panel{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease;
+}
+.diag-panel.open{ max-height:340px; }
+.diag-panel__inner{
+  padding:14px 16px 12px;
+  border:1px solid var(--hair);
+  border-radius:var(--r);
+  background:var(--paper-deep);
+  font-family:var(--mono);
+  font-size:.75rem;
+  font-weight:500;
+  line-height:1.75;
+  color:var(--ink-70);
+  max-height:320px;
+  overflow-y:auto;
+  margin-top:14px;
+}
+.diag-panel__inner::-webkit-scrollbar{ width:6px; }
+.diag-panel__inner::-webkit-scrollbar-thumb{ background:var(--hair-strong); border-radius:2px; }
+.diag-title{
+  font-family:var(--mono); font-size:.6875rem; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--ink-45);
+  margin-top:10px; margin-bottom:6px;
+  padding-bottom:6px;
+  border-bottom:1px dotted var(--ink-15);
+}
+.diag-title:first-child{ margin-top:0; }
+.diag-ok{ color:var(--success); }
+.diag-warn{ color:var(--warning); }
+.diag-err{ color:var(--error); }
+
+/* ── SPINNER ── */
+.spinner{
+  display:inline-block;
+  width:12px; height:12px;
+  border:2px solid var(--ink-25);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  vertical-align:middle;
+  margin-right:8px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ── COLOPHON ── */
+footer{
+  margin-top:80px; padding:26px 0 64px;
+  border-top:3px double var(--ink-25);
+  font-family:var(--mono); font-size:.75rem; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-45);
+}
+.colophon__inner{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:24px; flex-wrap:wrap;
+}
+.colophon__inner span:first-child{ color:var(--ink); }
+.colophon__inner span:last-child{ color:var(--accent); }
+
+.hidden{ display:none !important; }
+
+/* focus */
+.back-btn:focus-visible,
+.runhead__nav a:focus-visible,
+.btn:focus-visible,
+.editor-tab:focus-visible,
+.zoom-controls button:focus-visible,
+.field select:focus-visible,
+.field input:focus-visible,
+.editor-area textarea:focus-visible{
+  outline:1px solid var(--accent); outline-offset:3px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:1240px){
+  .workspace{ grid-template-columns:minmax(0, 1fr) 480px; gap:36px; }
+}
+
+@media (max-width:1000px){
+  .titleblock{ grid-template-columns:1fr; gap:32px; padding:44px 0 32px; }
+  .titleblock__spec{
+    border-left:0; padding-left:0;
+    padding-top:22px; border-top:1px solid var(--hair);
+  }
+  .workspace{ grid-template-columns:1fr; gap:32px; padding:36px 0 24px; }
+  .console{ position:static; }
+  .preview-scroll{ height:500px; }
+  .settings-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width:700px){
+  body{ font-size:16px; }
+  .sheet{ padding:0 18px; }
+  .runhead__top{ gap:12px; }
+  .runhead__nav a{ font-size:.6875rem; padding:9px 12px 8px; }
+  .back-btn{ font-size:.6875rem; padding:9px 14px 8px; }
+  .runhead__folios{ font-size:.6875rem; }
+  .titleblock h1{ font-size:clamp(2.25rem, 8vw, 3.25rem); }
+  .deck{ font-size:1rem; }
+  .plate{ grid-template-columns:1fr; }
+  .plate__num{ font-size:1.5rem; padding-top:0; padding-bottom:8px; }
+  .plate__num::after{ display:none; }
+  .plate__body{ padding:22px 18px 20px; }
+  .console__body{ padding:18px 16px 16px; }
+  .settings-grid{ grid-template-columns:1fr; }
+  .margin-group{ grid-template-columns:repeat(2, 1fr); }
+  .editor-area textarea{ min-height:320px; }
+  .preview-scroll{ height:420px; padding:14px 10px 20px; }
+  .orb{ display:none; }
+  .status-msg{ text-align:left; margin-left:0; white-space:normal; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
+
+<div class="sheet">
+  <div class="sheet__inner">
+
+    <!-- ── RUNHEAD ─────────────────────────────────────────── -->
+    <header class="runhead">
+      <div class="runhead__top">
+        <a class="back-btn" href="index.html"><i class="fas fa-arrow-left"></i> Back</a>
+
+        <div class="runhead__folios">
+          <span class="runhead__folio"><strong>Plate 06</strong> · PageWright</span>
+          <span class="runhead__folio">TPG Service v4</span>
+        </div>
+
+        <nav class="runhead__nav">
+          <a href="downloader.html"><i class="fas fa-download"></i>Downloader</a>
+          <a href="convert.html"><i class="fas fa-sliders-h"></i>EQ Studio</a>
+          <a href="vidcom.html"><i class="fas fa-film"></i>Compressor</a>
+          <a href="base64.html"><i class="fa fa-image"></i>Base64</a>
+          <a href="pagewright.php" class="active"><i class="fas fa-file-pdf"></i>PageWright</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ── TITLE BLOCK ─────────────────────────────────────── -->
+    <section class="titleblock">
+      <div class="titleblock__main">
+        <div class="titleblock__meta">
+          <div class="page-badge"><span class="pulse-dot"></span> Document Engine</div>
+          <span class="version">TPG Service v3</span>
+        </div>
+        <h1>HTML <em>→ PDF</em></h1>
+        <p class="deck">A self-contained document engine. Write HTML, configure pages, preview pagination, and generate PDF — no external dependencies.</p>
+      </div>
+
+      <aside class="titleblock__spec" aria-hidden="true">
+        <div class="spec">
+          <div class="spec__row"><span>Engine</span><span>Pure PHP</span></div>
+          <div class="spec__row"><span>Sizes</span><span>A4 · Letter</span></div>
+          <div class="spec__row"><span>Output</span><span>PDF</span></div>
+          <div class="spec__row"><span>Deps</span><span>None</span></div>
+        </div>
+        <div class="spec__dimension">
+          <span class="spec__dimension-line"></span>
+          <span>Client preview · Server PDF</span>
+          <span class="spec__dimension-line"></span>
+        </div>
+      </aside>
+    </section>
+
+    <div class="ruler" aria-hidden="true"></div>
+
+    <!-- ── WORKSPACE ───────────────────────────────────────── -->
+    <div class="workspace">
+
+      <!-- LEFT: flow -->
+      <div class="flow">
+
+        <!-- Plate 01 — Source editor -->
+        <div class="plate">
+          <div class="plate__num">01</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-code"></i> Source <span class="title-line"></span>
+            </div>
+
+            <div class="editor-tabs">
+              <button class="editor-tab active" data-tab="html">HTML</button>
+              <button class="editor-tab" data-tab="css">CSS</button>
+            </div>
+
+            <div class="editor-area active" data-area="html">
+              <textarea id="htmlEditor" spellcheck="false" placeholder="Paste or write HTML here..."></textarea>
+            </div>
+            <div class="editor-area" data-area="css">
+              <textarea id="cssEditor" spellcheck="false" placeholder="PDF-specific CSS overrides (optional)..."></textarea>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plate 02 — Page setup -->
+        <div class="plate">
+          <div class="plate__num">02</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-file"></i> Page Setup <span class="title-line"></span>
+            </div>
+
+            <div class="settings-grid">
+              <div class="field">
+                <label for="pageSize">Page size</label>
+                <select id="pageSize">
+                  <option value="A4">A4</option>
+                  <option value="A3">A3</option>
+                  <option value="A5">A5</option>
+                  <option value="Letter">Letter</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="pageOrientation">Orientation</label>
+                <select id="pageOrientation">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="marginUnit">Margin unit</label>
+                <select id="marginUnit">
+                  <option value="mm">mm</option>
+                  <option value="in">in</option>
+                  <option value="pt">pt</option>
+                </select>
+              </div>
+
+              <div class="field field--full">
+                <label>Margins</label>
+                <div class="margin-group">
+                  <div class="field"><label for="mT">Top</label><input type="number" id="mT" value="20" min="0" step="1"></div>
+                  <div class="field"><label for="mR">Right</label><input type="number" id="mR" value="15" min="0" step="1"></div>
+                  <div class="field"><label for="mB">Bottom</label><input type="number" id="mB" value="20" min="0" step="1"></div>
+                  <div class="field"><label for="mL">Left</label><input type="number" id="mL" value="15" min="0" step="1"></div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="headerText">Header</label>
+                <input type="text" id="headerText" placeholder="Optional">
+              </div>
+
+              <div class="field" style="grid-column:span 2;">
+                <label for="footerText">Footer</label>
+                <input type="text" id="footerText" placeholder="Page {{n}} of {{total}}">
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plate 03 — Diagnostics -->
+        <div class="plate">
+          <div class="plate__num">03</div>
+          <section class="plate__body">
+            <div class="section-title">
+              <i class="fas fa-stethoscope"></i> Diagnostics <span class="title-line"></span>
+            </div>
+
+            <div class="diag-panel" id="diagPanel">
+              <div class="diag-panel__inner" id="diagContent">
+                <div class="diag-title">Layout Diagnostics</div>
+                <div>No document processed yet.</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: sticky console -->
+      <aside class="console">
+        <div class="console__head">
+          <span><span class="live-dot"></span>Preview</span>
+          <span id="pageInfo">No document</span>
+        </div>
+
+        <div class="console__body">
+          <div class="preview-toolbar">
+            <span>Zoom</span>
+            <div class="zoom-controls">
+              <button id="zoomOut" title="Zoom out">−</button>
+              <span id="zoomLevel">100%</span>
+              <button id="zoomIn" title="Zoom in">+</button>
+            </div>
+          </div>
+
+          <div class="preview-scroll" id="previewScroll">
+            <div class="page-empty">Enter HTML to see a preview</div>
+          </div>
+
+          <div class="console-actions">
+            <button class="btn btn--primary" id="generateBtn"><i class="fas fa-file-pdf"></i> Generate PDF</button>
+            <button class="btn btn--secondary" id="diagToggle"><i class="fas fa-stethoscope"></i> Diagnostics</button>
+            <button class="btn btn--danger" id="clearBtn"><i class="fas fa-trash-can"></i> Clear</button>
+            <span class="status-msg" id="statusMsg">Ready</span>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ── COLOPHON ────────────────────────────────────────── -->
+    <footer>
+      <div class="colophon__inner">
+        <span>© 2026 TPG Service</span>
+        <span>PageWright · Pure PHP · No dependencies</span>
+        <span>All rights reserved</span>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- Hidden print iframe -->
+<iframe id="printFrame" style="position:absolute;left:-9999px;width:0;height:0;border:none;"></iframe>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   PageWright — HTML-to-PDF Document Engine Interface
+   ═══════════════════════════════════════════════════ */
+
+const PAGE_SIZES = {
+  A4:     { w: 210,   h: 297   },
+  A3:     { w: 297,   h: 420   },
+  A5:     { w: 148,   h: 210   },
+  Letter: { w: 215.9, h: 279.4 },
+  Legal:  { w: 215.9, h: 355.6 }
+};
+
+const MM_TO_PX = 3.7795;
+const MM_TO_PT = 2.8346;
+
+const htmlEditor     = document.getElementById('htmlEditor');
+const cssEditor      = document.getElementById('cssEditor');
+const previewScroll  = document.getElementById('previewScroll');
+const pageInfo       = document.getElementById('pageInfo');
+const zoomLevel      = document.getElementById('zoomLevel');
+const pageSizeSel    = document.getElementById('pageSize');
+const orientSel      = document.getElementById('pageOrientation');
+const marginUnitSel  = document.getElementById('marginUnit');
+const mT = document.getElementById('mT');
+const mR = document.getElementById('mR');
+const mB = document.getElementById('mB');
+const mL = document.getElementById('mL');
+const headerText     = document.getElementById('headerText');
+const footerText     = document.getElementById('footerText');
+const generateBtn    = document.getElementById('generateBtn');
+const diagToggle     = document.getElementById('diagToggle');
+const diagPanel      = document.getElementById('diagPanel');
+const diagContent    = document.getElementById('diagContent');
+const clearBtn       = document.getElementById('clearBtn');
+const statusMsg      = document.getElementById('statusMsg');
+const printFrame     = document.getElementById('printFrame');
+
+let currentZoom = 1.0;
+let pageCount   = 0;
+let debounceTimer = null;
+
+// ── Sample content ──
+htmlEditor.value = `<h1>Annual Report 2025</h1>
+
+<h2>Executive Summary</h2>
+
+<p>This report presents the key findings and strategic directions for the fiscal year 2025. Revenue grew 14% year-over-year, driven by expansion into the APAC region and the successful launch of three new product lines.</p>
+
+<p>Operating margins improved from 18.2% to 21.7%, reflecting the operational efficiency program initiated in Q2. Headcount increased by 12% primarily in engineering and customer success functions.</p>
+
+<h2>Financial Overview</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Quarter</th>
+      <th>Revenue</th>
+      <th>Expenses</th>
+      <th>Margin</th>
+      <th>Growth</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Q1</td><td>$4.2M</td><td>$3.3M</td><td>21.4%</td><td>+12%</td></tr>
+    <tr><td>Q2</td><td>$4.8M</td><td>$3.7M</td><td>22.9%</td><td>+14%</td></tr>
+    <tr><td>Q3</td><td>$5.1M</td><td>$4.0M</td><td>21.6%</td><td>+6%</td></tr>
+    <tr><td>Q4</td><td>$5.7M</td><td>$4.4M</td><td>22.8%</td><td>+12%</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><td><strong>Total</strong></td><td><strong>$19.8M</strong></td><td><strong>$15.4M</strong></td><td><strong>22.2%</strong></td><td><strong>+14%</strong></td></tr>
+  </tfoot>
+</table>
+
+<h2>Key Initiatives</h2>
+
+<ul>
+  <li><strong>Market Expansion:</strong> Established regional offices in Tokyo, Singapore, and Sydney. APAC revenue contribution increased from 8% to 19%.</li>
+  <li><strong>Product Development:</strong> Launched Analytics Pro, Compliance Suite, and the Mobile SDK. Combined new-product revenue: $2.1M.</li>
+  <li><strong>Operational Efficiency:</strong> Migrated infrastructure to containerized deployments, reducing cloud spend by 23% while improving p99 latency by 40%.</li>
+  <li><strong>Talent Acquisition:</strong> Hired 86 engineers and 34 customer-success specialists. Engineering attrition decreased to 6.2%.</li>
+</ul>
+
+<h2>Regional Performance</h2>
+
+<table>
+  <thead>
+    <tr><th>Region</th><th>Revenue</th><th>Share</th><th>YoY</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>North America</td><td>$9.1M</td><td>46%</td><td>+8%</td></tr>
+    <tr><td>Europe</td><td>$5.2M</td><td>26%</td><td>+11%</td></tr>
+    <tr><td>APAC</td><td>$3.8M</td><td>19%</td><td>+62%</td></tr>
+    <tr><td>Latin America</td><td>$1.7M</td><td>9%</td><td>+19%</td></tr>
+  </tbody>
+</table>
+
+<h2>Strategic Outlook</h2>
+
+<p>For 2026, we project revenue of $24–26M, representing 21–31% growth. The primary drivers will be continued APAC expansion, the general availability launch of Analytics Pro Enterprise, and deeper penetration into the regulated-industries segment via Compliance Suite.</p>
+
+<p>Capital allocation priorities remain R&D (40%), go-to-market (35%), and infrastructure (25%). We expect to achieve positive free cash flow by Q3 2026.</p>
+
+<h3>Risk Factors</h3>
+
+<ol>
+  <li>Currency exposure in APAC markets may compress reported revenue if USD strengthens.</li>
+  <li>Compliance Suite requires regulatory certification in each jurisdiction; delays are possible.</li>
+  <li>Competitive pressure from incumbents in the analytics segment may limit pricing power.</li>
+</ol>
+
+<p><em>This report was prepared by the Office of the CFO and reviewed by the Board Audit Committee. All figures are subject to final auditor confirmation.</em></p>`;
+
+cssEditor.value = `/* PDF-specific styles */
+body {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: 11pt;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+h1 {
+  font-size: 22pt;
+  font-weight: 600;
+  margin-bottom: 0.4em;
+  letter-spacing: -0.02em;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 0.3em;
+}
+
+h2 {
+  font-size: 14pt;
+  font-weight: 600;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+}
+
+h3 {
+  font-size: 12pt;
+  font-weight: 500;
+  margin-top: 1.2em;
+  margin-bottom: 0.3em;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 10pt;
+}
+
+th, td {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background: #f5f5f5;
+  font-weight: 500;
+}
+
+tfoot td {
+  border-top: 2px solid #333;
+}
+
+ul, ol {
+  margin: 0.8em 0;
+  padding-left: 1.8em;
+}
+
+li {
+  margin-bottom: 0.4em;
+}
+
+p {
+  margin: 0.6em 0;
+}`;
+
+// ── Editor tabs ──
+document.querySelectorAll('.editor-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.editor-area').forEach(a => a.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`.editor-area[data-area="${tab.dataset.tab}"]`).classList.add('active');
+  });
+});
+
+// ── Tab key in textareas ──
+[htmlEditor, cssEditor].forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      const end   = ta.selectionEnd;
+      ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = start + 2;
+      schedulePreview();
+    }
+  });
+});
+
+function getPageDims() {
+  const size = PAGE_SIZES[pageSizeSel.value];
+  const portrait = orientSel.value === 'portrait';
+  return {
+    w: portrait ? size.w : size.h,
+    h: portrait ? size.h : size.w
+  };
+}
+
+function getMargins() {
+  const unit = marginUnitSel.value;
+  const convert = unit === 'mm' ? 1 : unit === 'in' ? 25.4 : 25.4 / 72;
+  return {
+    top:    parseFloat(mT.value || 0) * convert,
+    right:  parseFloat(mR.value || 0) * convert,
+    bottom: parseFloat(mB.value || 0) * convert,
+    left:   parseFloat(mL.value || 0) * convert
+  };
+}
+
+// ── Build preview ──
+function buildPreview() {
+  const html = htmlEditor.value.trim();
+  const css  = cssEditor.value.trim();
+
+  if (!html) {
+    previewScroll.innerHTML = '<div class="page-empty">Enter HTML to see a preview</div>';
+    pageInfo.textContent = 'No document';
+    pageCount = 0;
+    return;
+  }
+
+  const dims    = getPageDims();
+  const margins = getMargins();
+  const scale   = currentZoom;
+
+  const pageW = dims.w * MM_TO_PX;
+  const pageH = dims.h * MM_TO_PX;
+
+  const mLeftPx   = margins.left   * MM_TO_PX;
+  const mRightPx  = margins.right  * MM_TO_PX;
+  const mTopPx    = margins.top    * MM_TO_PX;
+  const mBottomPx = margins.bottom * MM_TO_PX;
+  const contentW  = pageW - mLeftPx - mRightPx;
+  const contentH  = pageH - mTopPx - mBottomPx;
+
+  const fullHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    width: ${contentW}px;
+  }
+  ${css}
+</style>
+</head>
+<body>${html}</body>
+</html>`;
+
+  const measurer = document.createElement('iframe');
+  measurer.style.cssText = 'position:absolute;left:-9999px;width:' + contentW + 'px;height:0;border:none;';
+  document.body.appendChild(measurer);
+
+  measurer.addEventListener('load', () => {
+    try {
+      const doc  = measurer.contentDocument;
+      const body = doc.body;
+      const totalH = body.scrollHeight;
+
+      const pages = Math.max(1, Math.ceil(totalH / contentH));
+      pageCount = pages;
+      pageInfo.textContent = `${pages} page${pages > 1 ? 's' : ''} · ${pageSizeSel.value} ${orientSel.value}`;
+
+      previewScroll.innerHTML = '';
+
+      for (let i = 0; i < pages; i++) {
+        const sheet = document.createElement('div');
+        sheet.className = 'page-sheet';
+        sheet.style.width  = (pageW * scale) + 'px';
+        sheet.style.height = (pageH * scale) + 'px';
+
+        const marginGuide = document.createElement('div');
+        marginGuide.className = 'page-sheet__margin';
+        marginGuide.style.top    = (mTopPx * scale)    + 'px';
+        marginGuide.style.right  = (mRightPx * scale)  + 'px';
+        marginGuide.style.bottom = (mBottomPx * scale) + 'px';
+        marginGuide.style.left   = (mLeftPx * scale)   + 'px';
+        sheet.appendChild(marginGuide);
+
+        const pgNum = document.createElement('div');
+        pgNum.className = 'page-sheet__number';
+        pgNum.textContent = i + 1;
+        sheet.appendChild(pgNum);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'page-sheet__content';
+        contentDiv.style.width    = (contentW * scale) + 'px';
+        contentDiv.style.height   = (contentH * scale) + 'px';
+        contentDiv.style.position = 'absolute';
+        contentDiv.style.top      = (mTopPx * scale)    + 'px';
+        contentDiv.style.left     = (mLeftPx * scale)   + 'px';
+        contentDiv.style.overflow = 'hidden';
+
+        const pageIframe = document.createElement('iframe');
+        pageIframe.style.cssText = `
+          width: ${contentW}px;
+          height: ${contentH}px;
+          border: none;
+          display: block;
+          transform: scale(${scale});
+          transform-origin: top left;
+        `;
+        pageIframe.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    width: ${contentW}px;
+  }
+  ${css}
+</style>
+</head>
+<body style="position:relative;">
+<div style="position:absolute;top:${-(i * contentH)}px;left:0;width:${contentW}px;">
+ ${html}
+</div>
+</body>
+</html>`;
+        contentDiv.appendChild(pageIframe);
+        sheet.appendChild(contentDiv);
+        previewScroll.appendChild(sheet);
+      }
+
+      updateDiagnostics(dims, margins, pages, totalH, contentW, contentH);
+
+    } catch (err) {
+      previewScroll.innerHTML = `<div class="page-empty" style="color:var(--error);">Preview error: ${err.message}</div>`;
+      pageInfo.textContent = 'Error';
+    }
+
+    document.body.removeChild(measurer);
+  });
+
+  measurer.srcdoc = fullHTML;
+}
+
+// ── Diagnostics ──
+function updateDiagnostics(dims, margins, pages, totalH, contentW, contentH) {
+  const warnings = [];
+  const info = [];
+
+  info.push(`Page: ${dims.w.toFixed(1)} × ${dims.h.toFixed(1)} mm (${pageSizeSel.value} ${orientSel.value})`);
+  info.push(`Margins: T=${margins.top.toFixed(1)} R=${margins.right.toFixed(1)} B=${margins.bottom.toFixed(1)} L=${margins.left.toFixed(1)} mm`);
+  info.push(`Content area: ${(contentW / MM_TO_PX).toFixed(1)} × ${(contentH / MM_TO_PX).toFixed(1)} mm`);
+  info.push(`Total content height: ${(totalH / MM_TO_PX).toFixed(1)} mm`);
+  info.push(`Pages: ${pages}`);
+
+  const bodyH = dims.h - margins.top - margins.bottom;
+  const bodyW = dims.w - margins.left - margins.right;
+
+  if (bodyH <= 0) warnings.push('Top + bottom margins exceed page height — no printable area');
+  if (bodyW <= 0) warnings.push('Left + right margins exceed page width — no printable area');
+  if (pages > 100) warnings.push('Very long document (' + pages + ' pages) — generation may be slow');
+  if (totalH === 0) warnings.push('Content measures zero height — document may be empty or CSS may hide content');
+
+  let html = '<div class="diag-title">Layout Diagnostics</div>';
+
+  info.forEach(line => {
+    html += `<div class="diag-ok">✓ ${line}</div>`;
+  });
+
+  if (warnings.length) {
+    html += '<div class="diag-title">Warnings</div>';
+    warnings.forEach(w => {
+      html += `<div class="diag-warn">⚠ ${w}</div>`;
+    });
+  }
+
+  html += '<div class="diag-title">CSS Profile Support</div>';
+  html += '<div>Supported: block/inline layout, text wrapping, tables, lists, images, margins, padding, borders, colors, font properties, page-break rules</div>';
+  html += '<div class="diag-warn">Not supported: flexbox, grid, floats, generated content, CSS columns, custom properties, @media queries</div>';
+
+  diagContent.innerHTML = html;
+}
+
+// ── Debounced preview ──
+function schedulePreview() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(buildPreview, 400);
+}
+
+htmlEditor.addEventListener('input', schedulePreview);
+cssEditor.addEventListener('input', schedulePreview);
+
+[pageSizeSel, orientSel, marginUnitSel, mT, mR, mB, mL, headerText, footerText].forEach(el => {
+  el.addEventListener('change', schedulePreview);
+  el.addEventListener('input', schedulePreview);
+});
+
+// ── Zoom ──
+document.getElementById('zoomIn').addEventListener('click', () => {
+  currentZoom = Math.min(2.0, currentZoom + 0.1);
+  zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+  buildPreview();
+});
+
+document.getElementById('zoomOut').addEventListener('click', () => {
+  currentZoom = Math.max(0.3, currentZoom - 0.1);
+  zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+  buildPreview();
+});
+
+// ── Generate PDF ──
+generateBtn.addEventListener('click', () => {
+  const html = htmlEditor.value.trim();
+  if (!html) {
+    setStatus('No HTML content to generate', 'err');
+    return;
+  }
+
+  const css     = cssEditor.value.trim();
+  const dims    = getPageDims();
+  const margins = getMargins();
+  const unit    = marginUnitSel.value;
+
+  const pageCSS = `
+@page {
+  size: ${dims.w}mm ${dims.h}mm;
+  margin: ${margins.top}${unit} ${margins.right}${unit} ${margins.bottom}${unit} ${margins.left}${unit};
+}
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}`;
+
+  const printHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+  ${css}
+  ${pageCSS}
+</style>
+</head>
+<body>
+ ${html}
+</body>
+</html>`;
+
+  setStatus('Generating PDF…', 'ok');
+
+  printFrame.onload = () => {
+    try {
+      const win = printFrame.contentWindow;
+      win.focus();
+      win.print();
+      setStatus('PDF dialog opened — save from your browser\'s print dialog', 'ok');
+    } catch (err) {
+      setStatus('Print failed: ' + err.message, 'err');
+    }
+  };
+
+  printFrame.srcdoc = printHTML;
+});
+
+// ── Status ──
+function setStatus(msg, type) {
+  statusMsg.textContent = msg;
+  statusMsg.className = 'status-msg';
+  if (type === 'ok')  statusMsg.classList.add('status-msg--ok');
+  if (type === 'warn') statusMsg.classList.add('status-msg--warn');
+  if (type === 'err') statusMsg.classList.add('status-msg--err');
+}
+
+// ── Diagnostics toggle ──
+diagToggle.addEventListener('click', () => {
+  diagPanel.classList.toggle('open');
+});
+
+// ── Clear ──
+clearBtn.addEventListener('click', () => {
+  htmlEditor.value = '';
+  cssEditor.value  = '';
+  previewScroll.innerHTML = '<div class="page-empty">Enter HTML to see a preview</div>';
+  pageInfo.textContent = 'No document';
+  pageCount = 0;
+  setStatus('Ready', '');
+  diagContent.innerHTML = '<div class="diag-title">Layout Diagnostics</div><div>No document processed yet.</div>';
+});
+
+// ── Initial preview ──
+buildPreview();
+</script>
+</body>
+</html>
